@@ -1,0 +1,29 @@
+[package]
+name = "run_clang_format"
+version = "0.1.0"
+authors = ["Martin Lampacher <lmapii@gmail.com>"]
+description = """
+Cross platform CLI wrapper for executing clang-format based paths or globs specified
+in a JSON input file.
+"""
+# documentation = "https://docs.rs/globmatch"
+# homepage = "https://github.com/lmapii/globmatch"
+# repository = "https://github.com/lmapii/globmatch"
+keywords = ["clang-format", "glob", "search"]
+
+license-file = "LICENSE"
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.1", features = ["derive", "cargo"] }
+schemars = "0.8.8"
+serde = "1.0.136"
+serde_json = "1.0.79"
+log = "0.4.14"
+env_logger = "0.9.0"
+eyre = "0.6.7"
+color-eyre = "0.6.1"
+globmatch = { path = "../globmatch" }
+
+[dev-dependencies]
+doc-comment = "0.3"

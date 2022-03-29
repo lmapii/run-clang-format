@@ -1,0 +1,7 @@
+{
+  "paths": [
+    "../../../../selbststaendig/ble-plant/dev/core/**/*.[ch]",
+    "../../../../selbststaendig/ble-plant/dev/things/project/**/*.[ch]"
+  ],
+  "blacklist": ["FreeRTOSConfig.h"]
+}
