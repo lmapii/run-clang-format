@@ -3,5 +3,5 @@
     "../../../../selbststaendig/ble-plant/dev/core/**/*.[ch]",
     "../../../../selbststaendig/ble-plant/dev/things/project/**/*.[ch]"
   ],
-  "blacklist": ["FreeRTOSConfig.h"]
+  "blacklist": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"]
 }

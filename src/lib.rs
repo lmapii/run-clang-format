@@ -3,7 +3,7 @@ use globmatch;
 use serde::Deserialize;
 use std::path;
 
-use color_eyre::{eyre::eyre, eyre::Report, eyre::WrapErr, Help};
+use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -12,7 +12,7 @@ pub struct AppCfg {
     pub blacklist: Option<Vec<String>>,
 }
 
-fn check_patterns<T>(candidates: &Vec<Result<T, String>>) -> Result<(), Report> {
+fn extract_err<T>(candidates: Vec<Result<T, String>>) -> eyre::Result<Vec<T>, eyre::Report> {
     let failures: Vec<_> = candidates
         .iter()
         .filter_map(|f| match f {
@@ -31,14 +31,14 @@ fn check_patterns<T>(candidates: &Vec<Result<T, String>>) -> Result<(), Report> 
                 .join("\n")
         )
     }
-    Ok(())
+    Ok(candidates.into_iter().flatten().collect())
 }
 
-fn get_matchers<P>(
+fn build_matchers<P>(
     globs: &Vec<String>,
     root: P,
     case_sensitive: bool,
-) -> Result<Vec<globmatch::Matcher<path::PathBuf>>, Report>
+) -> eyre::Result<Vec<globmatch::Matcher<path::PathBuf>>, eyre::Report>
 where
     P: AsRef<path::Path>,
 {
@@ -51,12 +51,14 @@ where
         })
         .collect();
 
-    check_patterns(&candidates)?;
-    let candidates = candidates.into_iter().flatten().collect();
+    let candidates = extract_err(candidates)?;
     Ok(candidates)
 }
 
-fn get_globs(globs: &Vec<String>, case_sensitive: bool) -> Result<Vec<globmatch::GlobSet>, Report> {
+fn build_glob_sets(
+    globs: &Vec<String>,
+    case_sensitive: bool,
+) -> eyre::Result<Vec<globmatch::GlobSet>, eyre::Report> {
     let candidates: Vec<Result<_, String>> = globs
         .iter()
         .map(|pattern| {
@@ -66,12 +68,11 @@ fn get_globs(globs: &Vec<String>, case_sensitive: bool) -> Result<Vec<globmatch:
         })
         .collect();
 
-    check_patterns(&candidates)?;
-    let candidates = candidates.into_iter().flatten().collect();
+    let candidates = extract_err(candidates)?;
     Ok(candidates)
 }
 
-pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
+pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), eyre::Report> {
     // use ensure! for parameter checks
 
     let json_path = matches
@@ -89,7 +90,7 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
         ),
     };
 
-    let case_sensitive = if cfg!(windows) { false } else { true };
+    let match_case = if cfg!(windows) { false } else { true };
 
     let json_file = json_path.to_string_lossy();
     let f = std::fs::File::open(&json_path)
@@ -110,7 +111,7 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
     // let paths: Vec<_> = json.paths.iter().map(|p| json_root.join(p)).collect();
     // log::info!("joined paths {:?}", paths);
 
-    let candidates = get_matchers(&json.paths, &json_root, case_sensitive)
+    let candidates = build_matchers(&json.paths, &json_root, match_case)
         .wrap_err("Failed to compile patterns for 'paths'")
         .suggestion(format!(
             "Check the format of the entry 'paths' in {}.",
@@ -123,7 +124,7 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
         Some(paths) => {
             blacklist_entries = paths;
             Some(
-                get_globs(&blacklist_entries, case_sensitive)
+                build_glob_sets(&blacklist_entries, match_case)
                     .wrap_err("Failed to compile patterns for 'paths'")
                     .suggestion(format!(
                         "Check the format of the entry 'paths' in {}.",
@@ -132,6 +133,8 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
             )
         }
     };
+
+    let mut filtered = vec![];
 
     let paths: Vec<_> = candidates
         .into_iter()
@@ -145,30 +148,45 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), Report> {
         .filter(|path| match &blacklist {
             None => true,
             Some(patterns) => {
-                let matches = patterns
+                let do_filter = !patterns
                     .iter()
                     .try_for_each(|glob| match glob.is_match(path) {
                         true => None,      // path is a match, abort on first match in blacklist
                         false => Some(()), // path is not a match, continue with 'ok'
                     })
-                    .is_some();
-                if !matches {
-                    log::warn!("filtered: {}", path.to_string_lossy());
+                    .is_some(); // the value is "Some" if no match was encountered
+
+                if do_filter {
+                    filtered.push(path::PathBuf::from(path));
                 }
-                matches
+                !do_filter
             }
         })
         .collect();
 
+    // TODO: canonicalize() is inefficient for a pretty print since it does access the fs
     let paths: Vec<_> = paths.into_iter().collect();
     log::info!(
         "paths \n{}",
         paths
             .iter()
-            .map(|p| format!("{}", p.to_string_lossy()))
+            .map(|p| format!("{}", p.canonicalize().unwrap().to_string_lossy()))
+            // .map(|p| format!("{}", p.to_string_lossy()))
             .collect::<Vec<_>>()
             .join("\n")
     );
+
+    if filtered.len() > 0 {
+        log::warn!(
+            "filtered \n{}",
+            filtered
+                .iter()
+                .map(|p| format!("{}", p.canonicalize().unwrap().to_string_lossy()))
+                // .map(|p| format!("{}", p.to_string_lossy()))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+    }
 
     log::info!("success :)");
     Ok(())
