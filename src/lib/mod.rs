@@ -3,13 +3,18 @@ use globmatch;
 use serde::Deserialize;
 use std::path;
 
+#[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
+use crate::cli;
+
+// TODO: UTF-8 restriction?
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct AppCfg {
+pub struct JsonModel {
     pub paths: Vec<String>,
     pub blacklist: Option<Vec<String>>,
+    pub style: Option<path::PathBuf>,
 }
 
 fn extract_err<T>(candidates: Vec<Result<T, String>>) -> eyre::Result<Vec<T>, eyre::Report> {
@@ -72,54 +77,44 @@ fn build_glob_sets(
     Ok(candidates)
 }
 
-pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), eyre::Report> {
-    // use ensure! for parameter checks
-
-    let json_path = matches
-        .value_of_os("JSON")
-        .map(std::path::PathBuf::from)
-        .ok_or(eyre!("Could not convert parameter <JSON> to path"))?;
-
-    let style_path = match matches.is_present("style") {
-        false => None,
-        true => Some(
-            matches
-                .value_of_os("style")
-                .map(std::path::PathBuf::from)
-                .ok_or(eyre!("Could not convert parameter --style to path"))?,
-        ),
-    };
-
+pub fn run(data: cli::Data) -> eyre::Result<(), eyre::Report> {
     let match_case = if cfg!(windows) { false } else { true };
 
-    let json_file = json_path.to_string_lossy();
-    let f = std::fs::File::open(&json_path)
-        .wrap_err(format!("Failed to open configuration file '{}'", json_file))?;
+    // // TODO: prettify error: prepend "Error while loading json_file"
+    // let style_json = match &cfg.style {
+    //     None => None,
+    //     Some(path) => {
+    //         let mut full_path = path::PathBuf::from(json_root.as_path());
+    //         full_path.push(path);
+    //         Some(
+    //             path_exists_or_err(full_path)
+    //                 .wrap_err(format!("Invalid configuration for 'style''"))
+    //                 .suggestion(format!(
+    //                     "Check the format of the field 'style' in {}.",
+    //                     json_file
+    //                 ))?,
+    //         )
+    //     }
+    // };
 
-    let json: AppCfg = serde_json::from_reader(std::io::BufReader::new(f))
-        .wrap_err(format!("Validation failed for '{}'", json_file))
-        .suggestion(format!(
-            "Ensure that '{}' is a valid .json file and contains all required fields.",
-            json_file
-        ))?;
+    // let paths: Vec<_> = data
+    //     .json
+    //     .paths
+    //     .iter()
+    //     .map(|p| data.json.root.join(p))
+    //     .collect();
 
-    // TODO: print json schema in case of errors
-
-    let json_root = path::PathBuf::from(json_path.canonicalize().unwrap().parent().unwrap());
-    log::info!("parent folder of json = {}", json_root.to_string_lossy());
-
-    // let paths: Vec<_> = json.paths.iter().map(|p| json_root.join(p)).collect();
     // log::info!("joined paths {:?}", paths);
 
-    let candidates = build_matchers(&json.paths, &json_root, match_case)
-        .wrap_err("Failed to compile patterns for 'paths'")
+    let candidates = build_matchers(&data.json.paths, &data.json.root, match_case)
+        .wrap_err("Error while parsing 'paths'")
         .suggestion(format!(
-            "Check the format of the entry 'paths' in {}.",
-            json_file
+            "Check the format of the field 'paths' in the provided file '{}'.",
+            data.json.name
         ))?;
 
     let blacklist_entries; // create binding that lives long enough
-    let blacklist = match json.blacklist {
+    let blacklist = match data.json.blacklist {
         None => None,
         Some(paths) => {
             blacklist_entries = paths;
@@ -127,8 +122,8 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), eyre::Report> {
                 build_glob_sets(&blacklist_entries, match_case)
                     .wrap_err("Failed to compile patterns for 'paths'")
                     .suggestion(format!(
-                        "Check the format of the entry 'paths' in {}.",
-                        json_file
+                        "Check the format of the field 'paths' in {}.",
+                        data.json.name
                     ))?,
             )
         }
@@ -154,7 +149,7 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), eyre::Report> {
                         true => None,      // path is a match, abort on first match in blacklist
                         false => Some(()), // path is not a match, continue with 'ok'
                     })
-                    .is_some(); // the value is "Some" if no match was encountered
+                    .is_some(); // the value remains "Some" if no match was encountered
 
                 if do_filter {
                     filtered.push(path::PathBuf::from(path));
@@ -187,6 +182,12 @@ pub fn run(matches: clap::ArgMatches) -> eyre::Result<(), eyre::Report> {
                 .join("\n")
         );
     }
+
+    // TODO: remove duplicates
+
+    // TODO: invoke command
+    // https://stackoverflow.com/questions/21011330/how-do-i-invoke-a-system-command-and-capture-its-output
+    // https://stackoverflow.com/questions/49218599/write-to-child-process-stdin-in-rust/49597789#49597789
 
     log::info!("success :)");
     Ok(())

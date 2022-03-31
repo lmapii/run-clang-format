@@ -1,4 +1,4 @@
-mod cli;
+pub mod cli;
 mod lib;
 
 fn main() -> eyre::Result<()> {
@@ -8,8 +8,6 @@ fn main() -> eyre::Result<()> {
     //     std::env::current_dir().unwrap().to_string_lossy()
     // );
 
-    let matches = cli::build().get_matches();
-    cli::setup(&matches);
-
-    lib::run(matches)
+    let data = cli::Builder::build().parse()?;
+    lib::run(data)
 }

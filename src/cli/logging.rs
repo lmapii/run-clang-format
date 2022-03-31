@@ -1,34 +1,6 @@
-use clap::{arg, crate_authors, crate_description, crate_name, crate_version};
-
 use env_logger::fmt;
+
 use std::io::Write;
-
-pub fn build() -> clap::Command<'static> {
-    let cmd = clap::Command::new(crate_name!())
-        .version(crate_version!())
-        .author(crate_authors!())
-        .about(crate_description!())
-        .arg(
-            arg!(<JSON>)
-                .help("Path/configuration as .json")
-                // invalid UTF-8 characters must be allowed since we'll be using value_of_os
-                // and paths do not necessarily only contain valid UTF-8 characters.
-                .allow_invalid_utf8(true),
-        )
-        .arg(
-            arg!(-s --style ... "Optional path to .clang-format file")
-                .allow_invalid_utf8(true)
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
-                .multiple_values(false),
-        )
-        .arg(arg!(-q --quiet "Suppress all output except for errors; overrides -v"));
-
-    cmd
-}
 
 fn log_level(matches: &clap::ArgMatches) -> log::Level {
     let lvl = if matches.is_present("quiet") {
