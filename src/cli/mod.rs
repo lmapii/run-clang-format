@@ -1,5 +1,5 @@
 mod logging;
-mod utils;
+pub mod utils;
 
 use std::path;
 use std::process;
@@ -12,11 +12,16 @@ use schemars::{schema_for, JsonSchema};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, JsonSchema)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(rename_all = "camelCase")] // removed: deny_unknown_fields
 pub struct JsonModel {
-    pub paths: Vec<String>, // TODO: utf-8 ?
+    /// List of paths as globs
+    pub paths: Vec<String>,
+    /// List of globs to use for filtering (global blacklist)
     pub blacklist: Option<Vec<String>>,
-    pub style: Option<path::PathBuf>,
+    /// Optional path to a `.clang-format` style file (can be specified via --style)
+    pub style_file: Option<path::PathBuf>,
+    /// Optional path where the `.clang-format` file should be copied to while executing.
+    pub style_root: Option<path::PathBuf>,
 
     #[serde(skip)]
     pub root: path::PathBuf,
@@ -76,7 +81,7 @@ impl Builder {
         builder
     }
 
-    pub fn parse(self) -> eyre::Result<Data, eyre::Report> {
+    pub fn parse(self) -> eyre::Result<Data> {
         if let Some(_) = self.matches.subcommand_matches("schema") {
             let _ = Builder::app().print_help();
             println!(
@@ -87,14 +92,13 @@ impl Builder {
         }
 
         let json_path = path_for_key(&self.matches, "JSON")?;
-        let style_path = path_for_key(&self.matches, "style")?;
-
         let json = JsonModel::load(&json_path).wrap_err("Invalid parameter <JSON>")?;
 
         let style = match self.matches.is_present("style") {
             false => None,
             true => {
-                let path = utils::file_with_name(&style_path, ".clang-format")
+                let style_path = path_for_key(&self.matches, "style")?;
+                let path = utils::file_with_name_or_ext(&style_path, ".clang-format")
                     .wrap_err(format!("Invalid parameter --style"))?;
                 Some(path)
             }
@@ -110,11 +114,11 @@ impl JsonModel {
         serde_json::to_string_pretty(&schema).unwrap()
     }
 
-    fn load<P>(path: P) -> eyre::Result<JsonModel, eyre::Report>
+    fn load<P>(path: P) -> eyre::Result<JsonModel>
     where
         P: AsRef<path::Path>,
     {
-        let json_path = utils::file_with_ext(path.as_ref(), "json")?;
+        let json_path = utils::file_with_ext(path.as_ref(), "json", true)?;
         let json_name = json_path.to_string_lossy();
 
         let f = std::fs::File::open(path.as_ref())
@@ -132,10 +136,7 @@ impl JsonModel {
     }
 }
 
-pub fn path_for_key(
-    matches: &clap::ArgMatches,
-    key: &str,
-) -> eyre::Result<path::PathBuf, eyre::Report> {
+fn path_for_key(matches: &clap::ArgMatches, key: &str) -> eyre::Result<path::PathBuf> {
     let path = matches
         .value_of_os(key)
         .map(std::path::PathBuf::from)
