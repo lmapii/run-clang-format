@@ -7,6 +7,7 @@ use std::path;
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
 use crate::cli::{self, utils};
+use crate::cmd;
 
 // TODO: UTF-8 restriction?
 #[derive(Deserialize, Debug)]
@@ -117,17 +118,20 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
     Ok(style)
 }
 
-fn resolve_style(
-    data: &mut cli::Data,
-) -> eyre::Result<(Option<path::PathBuf>, Option<path::PathBuf>)> {
+fn resolve_style(data: &cli::Data) -> eyre::Result<(Option<path::PathBuf>, Option<path::PathBuf>)> {
     let style_file = resolve_style_file(&data)?;
-    let style_root = match &mut data.json.style_root {
+    let style_root = match &data.json.style_root {
         None => None,
         Some(path) => {
-            let full_path = &mut data.json.root;
-            full_path.push(path);
+            let path = if path.is_absolute() {
+                path::PathBuf::from(path.as_path())
+            } else {
+                let mut full_path = path::PathBuf::from(data.json.root.as_path());
+                full_path.push(path);
+                full_path
+            };
             Some(
-                utils::dir_or_err(full_path.as_path())
+                utils::dir_or_err(path.as_path())
                     .wrap_err("Invalid configuration for 'styleRoot'")
                     .suggestion("Please make sure that 'styleRoot' is a valid directory and check the access permissions")?,
             )
@@ -165,6 +169,27 @@ fn resolve_style(
     Ok((style_file, style_root))
 }
 
+fn resolve_command(data: &cli::Data) -> path::PathBuf {
+    match &data.json.command {
+        None => match &data.command {
+            // use default value if not specified in configuration file nor as parameter
+            None => path::PathBuf::from("clang-format"),
+            // cmd defined as CLI parameter but not in the .json configuration file
+            Some(cmd_cli) => path::PathBuf::from(cmd_cli.as_path()),
+        },
+        Some(cmd_cfg) => match &data.command {
+            // cmd defined in the .json configuration file but not as CLI parameter
+            None => path::PathBuf::from(cmd_cfg.as_path()),
+            // cmd defined in both, the .json configuration file and as CLI parameter
+            Some(cmd_cli) => {
+                log::info!("Override detected:\nCommand '{}' specified in '{}'\nis overridden by the command line parameter: '{}'",
+                cmd_cfg.to_string_lossy(), data.json.name, cmd_cli.as_path().to_string_lossy());
+                path::PathBuf::from(cmd_cli.as_path())
+            }
+        },
+    }
+}
+
 // struct App<'a> {
 //     candidates: Vec<globmatch::Matcher<'a, path::PathBuf>>,
 //     blacklist: Option<Vec<globmatch::GlobSet<'a>>>,
@@ -183,6 +208,25 @@ pub fn run(mut data: cli::Data) -> eyre::Result<()> {
             style_root.unwrap().to_string_lossy()
         );
     }
+
+    let cmd_path = resolve_command(&data);
+    let cmd = cmd::Runner::new(&cmd_path);
+    let version = cmd
+        .get_version()
+        .wrap_err(format!(
+            "Failed to execute '{}'",
+            cmd_path.to_string_lossy()
+        ))
+        .suggestion(format!(
+            "Please make sure that the command '{}' exists or is in your search path",
+            cmd_path.to_string_lossy()
+        ))?;
+
+    log::info!(
+        "Using '{}', version {}",
+        cmd_path.to_string_lossy(),
+        version
+    );
 
     let match_case = if cfg!(windows) { false } else { true };
     let candidates = build_matchers(&data.json.paths, &data.json.root, match_case)
@@ -267,10 +311,6 @@ pub fn run(mut data: cli::Data) -> eyre::Result<()> {
                 .join("\n")
         );
     }
-
-    // TODO: invoke command
-    // https://stackoverflow.com/questions/21011330/how-do-i-invoke-a-system-command-and-capture-its-output
-    // https://stackoverflow.com/questions/49218599/write-to-child-process-stdin-in-rust/49597789#49597789
 
     log::info!("success :)");
     Ok(())

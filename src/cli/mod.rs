@@ -20,8 +20,10 @@ pub struct JsonModel {
     pub blacklist: Option<Vec<String>>,
     /// Optional path to a `.clang-format` style file (can be specified via --style)
     pub style_file: Option<path::PathBuf>,
-    /// Optional path where the `.clang-format` file should be copied to while executing.
+    /// Optional path where the `.clang-format` file should be copied to while executing
     pub style_root: Option<path::PathBuf>,
+    /// Optional path to the `clang-format` executable or command name
+    pub command: Option<path::PathBuf>,
 
     #[serde(skip)]
     pub root: path::PathBuf,
@@ -33,6 +35,7 @@ pub struct JsonModel {
 pub struct Data {
     pub json: JsonModel,
     pub style: Option<path::PathBuf>,
+    pub command: Option<path::PathBuf>,
 }
 
 pub struct Builder {
@@ -54,7 +57,14 @@ impl Builder {
                     .allow_invalid_utf8(true),
             )
             .arg(
-                arg!(-s --style ... "Optional path to .clang-format file")
+                arg!(-s --style ... "Optional path to .clang-format style file. Overrides <JSON> configuration")
+                    .allow_invalid_utf8(true)
+                    .takes_value(true)
+                    .required(false),
+            )
+            .arg(
+                arg!(-c --command ... "Optional path to executable or clang-format command. Overrides <JSON> configuration, defaults to `clang-format`")
+                    // .default_value("clang-format")
                     .allow_invalid_utf8(true)
                     .takes_value(true)
                     .required(false),
@@ -91,20 +101,57 @@ impl Builder {
             process::exit(0);
         }
 
-        let json_path = path_for_key(&self.matches, "JSON")?;
+        let json_path = self.path_for_key("JSON", true)?;
         let json = JsonModel::load(&json_path).wrap_err("Invalid parameter <JSON>")?;
 
         let style = match self.matches.is_present("style") {
             false => None,
             true => {
-                let style_path = path_for_key(&self.matches, "style")?;
+                let style_path = self.path_for_key("style", true)?;
                 let path = utils::file_with_name_or_ext(&style_path, ".clang-format")
                     .wrap_err(format!("Invalid parameter --style"))?;
                 Some(path)
             }
         };
 
-        Ok(Data { json, style })
+        // we're not yet validating the command here, since the same procedure is applied for the file
+        let command = match self.matches.value_of_os("command") {
+            None => None,
+            Some(_) => Some(self.path_for_key("command", false)?),
+        };
+
+        // let command = self
+        //     .matches
+        //     .value_of_os("command")
+        //     .and(Some(self.path_for_key("command", false)?));
+
+        Ok(Data {
+            json,
+            style,
+            command,
+        })
+    }
+
+    fn path_for_key(&self, key: &str, check_exists: bool) -> eyre::Result<path::PathBuf> {
+        // println!(
+        //     "path_for_key {:?} is {:?}",
+        //     key,
+        //     self.matches.value_of_os(key)
+        // );
+
+        let path = self
+            .matches
+            .value_of_os(key)
+            .map(std::path::PathBuf::from)
+            .ok_or(eyre!(format!(
+                "Could not convert parameter '{}' to path",
+                key
+            )))?;
+
+        if check_exists {
+            return utils::path_or_err(path);
+        }
+        Ok(path)
     }
 }
 
@@ -134,16 +181,4 @@ impl JsonModel {
         json.name = json_path.to_string_lossy().into();
         Ok(json)
     }
-}
-
-fn path_for_key(matches: &clap::ArgMatches, key: &str) -> eyre::Result<path::PathBuf> {
-    let path = matches
-        .value_of_os(key)
-        .map(std::path::PathBuf::from)
-        .ok_or(eyre!(format!(
-            "Could not convert parameter {} to path",
-            key
-        )))?;
-
-    utils::path_or_err(path)
 }
