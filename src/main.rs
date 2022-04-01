@@ -10,4 +10,5 @@ fn main() -> eyre::Result<()> {
 
     let data = cli::Builder::build().parse()?;
     lib::run(data)
+    // println!("data {:?}", data); value moved :)
 }

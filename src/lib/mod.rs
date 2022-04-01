@@ -77,7 +77,7 @@ fn build_glob_sets(
     Ok(candidates)
 }
 
-fn resolve_style(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathBuf>> {
+fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathBuf>> {
     let style_json = match &data.json.style_file {
         None => None,
         Some(path) => {
@@ -117,20 +117,14 @@ fn resolve_style(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathBuf>> 
     Ok(style)
 }
 
-// TODO: corner case: when applying clang-format we should search through ROOT and deterime
-// a common root folder where to place the .clang-format
-// but we can also search recursively if this would be overridden by any other .clang-format file
-// within this tree -> we're ignoring that
-// can also define a root in the format.json that defines where to place the clang-format file
-
-pub fn run(data: cli::Data) -> eyre::Result<()> {
-    let match_case = if cfg!(windows) { false } else { true };
-    let style_file = resolve_style(&data)?;
-
-    let style_root = match data.json.style_root {
+fn resolve_style(
+    data: &mut cli::Data,
+) -> eyre::Result<(Option<path::PathBuf>, Option<path::PathBuf>)> {
+    let style_file = resolve_style_file(&data)?;
+    let style_root = match &mut data.json.style_root {
         None => None,
         Some(path) => {
-            let mut full_path = path::PathBuf::from(data.json.root.as_path());
+            let full_path = &mut data.json.root;
             full_path.push(path);
             Some(
                 utils::dir_or_err(full_path.as_path())
@@ -140,15 +134,18 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     };
 
-    let copy_style;
+    // this variable exist only for demonstration purposes. later we can simply assume that
+    // style_root is a Some() value and unwrap it in case style_file is also Some()
+    let _copy_style;
+
     if style_root.is_none() && style_file.is_err() {
         // scenario: no root folder and no style file specified, simply run clang-format
         // and assume that there is a .clang-format file in the root folder of all files
-        copy_style = false;
+        _copy_style = false;
     } else if style_root.is_some() && style_file.is_ok() {
         // scenario: root folder and style file have been specified. it is necessary to copy
         // the style file to the root folder before executing clang-format
-        copy_style = true;
+        _copy_style = true;
     } else if style_root.is_some() && style_file.is_err() {
         // unsupported scenario: root specified but missing style file
         return Err(style_file.unwrap_err().wrap_err(
@@ -164,14 +161,30 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             .suggestion("Please add the field 'styleRoot' to your configuration file."));
     }
 
-    if let Ok(style_file) = style_file {
+    let style_file = style_file.ok(); // transform to Option, error has already been used.
+    Ok((style_file, style_root))
+}
+
+// struct App<'a> {
+//     candidates: Vec<globmatch::Matcher<'a, path::PathBuf>>,
+//     blacklist: Option<Vec<globmatch::GlobSet<'a>>>,
+
+//     style_file: Option<path::PathBuf>,
+//     style_root: Option<path::PathBuf>,
+// }
+
+// borrowing mutably - should have better performance? just playing around with params
+pub fn run(mut data: cli::Data) -> eyre::Result<()> {
+    let (style_file, style_root) = resolve_style(&mut data)?;
+    if let Some(style_file) = style_file {
         log::info!(
-            "Using parameters from style file {}",
-            style_file.to_string_lossy()
+            "Using parameters from style file {}\nPlacing to {}",
+            style_file.to_string_lossy(),
+            style_root.unwrap().to_string_lossy()
         );
     }
-    println!("Style file will be copied: {}", copy_style);
 
+    let match_case = if cfg!(windows) { false } else { true };
     let candidates = build_matchers(&data.json.paths, &data.json.root, match_case)
         .wrap_err("Error while parsing 'paths'")
         .suggestion(format!(
