@@ -6,5 +6,6 @@
   ],
   "blacklist": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"],
   "styleFile": "./.clang-format",
-  "styleRoot": "../../../../selbststaendig/ble-plant/dev"
+  "styleRoot": "../../../../selbststaendig/ble-plant/dev",
+  "command": "/Users/martin/Downloads/clang+llvm-14.0.0-x86_64-apple-darwin/bin/clang-format"
 }
