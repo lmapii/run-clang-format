@@ -1,5 +1,6 @@
+use color_eyre::owo_colors::OwoColorize;
 use serde::Deserialize;
-use std::path;
+use std::{fs, path};
 
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
@@ -27,19 +28,7 @@ pub struct JsonModel {
 //     style_root: Option<path::PathBuf>,
 // }
 
-pub fn run(data: cli::Data) -> eyre::Result<()> {
-    let (style_file, style_root) = resolve::style_and_root(&data)?;
-    if let Some(style_file) = style_file {
-        log::info!(
-            "Using parameters from style file {}",
-            style_file.to_string_lossy(),
-        );
-        log::info!(
-            "Placing to format root {}",
-            style_root.unwrap().to_string_lossy()
-        );
-    }
-
+fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
     let cmd_path = resolve::command(&data);
     let cmd = cmd::Runner::new(&cmd_path);
     let version = cmd
@@ -59,6 +48,92 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         version
     );
 
+    Ok(cmd)
+}
+
+fn place_style_file(
+    file_and_root: Option<(path::PathBuf, path::PathBuf)>,
+) -> eyre::Result<Option<path::PathBuf>> {
+    if file_and_root.is_none() {
+        // in case no style file has been specified there's nothing to do
+        return Ok(None);
+    }
+
+    // the style file `src` should be copied to the destination directory `dst`
+    let (src_file, dst_root) = file_and_root.unwrap();
+    let mut dst_file = path::PathBuf::from(dst_root.as_path());
+    // by adding the filename of the style file we get the final name of the destination file
+    dst_file.push(src_file.as_path().file_name().unwrap());
+
+    // it may happen that there is already a .clang-format file at the destination folder, e.g.,
+    // because the user placed it there while working with an editor supporting `clang-format`.
+    // in such a case we provide feedback by comparing the file contents and abort with an error
+    // if they do not match.
+    if dst_file.exists() {
+        log::warn!(
+            "Encountered existing style file {}",
+            dst_file.to_string_lossy()
+        );
+
+        let content_src = fs::read_to_string(&src_file)
+            .wrap_err(format!("Failed to read '{}'", dst_file.to_string_lossy()))?;
+        let content_dst = fs::read_to_string(&dst_file.as_path())
+            .wrap_err(format!("Failed to read '{}'", dst_file.to_string_lossy()))
+            .wrap_err("Error while trying to compare existing style file")
+            .suggestion(format!(
+                "Please delete or fix the existing style file {}",
+                dst_file.to_string_lossy()
+            ))?;
+
+        if content_src == content_dst {
+            log::warn!(
+                "Existing style file matches {}, skipping placement",
+                src_file.to_string_lossy()
+            );
+            return Ok(None);
+        }
+
+        return Err(eyre::eyre!(
+            "Existing style file {} does not match provided style file {}",
+            dst_file.to_string_lossy(),
+            src_file.to_string_lossy()
+        )
+        .suggestion(format!(
+            "Please either delete the file {} or align the contents with {}",
+            dst_file.to_string_lossy(),
+            src_file.to_string_lossy()
+        )));
+    }
+
+    log::info!(
+        "Copying '{}' to '{}'",
+        src_file.to_string_lossy(),
+        dst_root.to_string_lossy()
+    );
+    // no file found at destination, copy the provided style file
+    let _ = fs::copy(&src_file, &dst_file)
+        .wrap_err(format!(
+            "Failed to copy style file to {}",
+            dst_root.to_string_lossy(),
+        ))
+        .suggestion(format!(
+            "Please check the permissions for the folder {}",
+            dst_root.to_string_lossy()
+        ))?;
+
+    Ok(Some(dst_file))
+}
+
+pub fn run(data: cli::Data) -> eyre::Result<()> {
+    let style_and_root = resolve::style_and_root(&data)?;
+    if let Some((style_file, style_root)) = &style_and_root {
+        log::info!(
+            "Using parameters from style file {}",
+            style_file.to_string_lossy(),
+        );
+        log::info!("Placing to format root {}", style_root.to_string_lossy());
+    }
+
     let match_case = if cfg!(windows) { false } else { true };
     let candidates = globs::build_matchers(&data.json.paths, &data.json.root, match_case)
         .wrap_err("Error while parsing 'paths'")
@@ -68,7 +143,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         ))?;
 
     let blacklist_entries; // create binding that lives long enough
-    let blacklist = match data.json.blacklist {
+    let blacklist = match &data.json.blacklist {
         None => None,
         Some(paths) => {
             blacklist_entries = paths;
@@ -83,7 +158,29 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     };
 
-    let paths = globs::match_paths(candidates, blacklist);
+    let paths: Vec<_> = globs::match_paths(candidates, blacklist)
+        .into_iter()
+        .map(|p| p.canonicalize().unwrap())
+        .collect();
+
+    let cmd = get_command(&data)?;
+    let style = place_style_file(style_and_root)?;
+
+    let _style = scopeguard::guard(style, |path| {
+        // ensure we delete the temporary style file at return or panic
+        if let Some(path) = path {
+            log::debug!("Deleting temporary file {}", path.to_string_lossy());
+            let _ = fs::remove_file(path);
+        }
+    });
+
+    log::info!("Formatting files...");
+    for path in paths.into_iter() {
+        log::info!("  + {}", path.to_string_lossy());
+        let _ = cmd.format(path.as_path())
+            .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
+            .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
+    }
 
     log::info!("success :)");
     Ok(())

@@ -28,16 +28,16 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
                 "Style file must either be specified as parameter or within the configuration file"
             )),
             // style defined as CLI parameter but not in the .json configuration file
-            Some(s_cli) => Ok(path::PathBuf::from(s_cli.as_path())),
+            Some(s_cli) => Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap()),
         },
         Some(s_cfg) => match &data.style {
             // style defined in the .json configuration file but not as CLI parameter
-            None => Ok(path::PathBuf::from(s_cfg.as_path())),
+            None => Ok(path::PathBuf::from(s_cfg.as_path()).canonicalize().unwrap()),
             // style defined in both, the .json configuration file and as CLI parameter
             Some(s_cli) => {
                 log::info!("Override detected:\nStyle file '{}' specified in '{}'\nis overridden by the command line parameter: '{}'",
                 s_cfg.to_string_lossy(), data.json.name, s_cli.as_path().to_string_lossy());
-                Ok(path::PathBuf::from(s_cli.as_path()))
+                Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap())
             }
         },
     };
@@ -45,9 +45,7 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
     Ok(style)
 }
 
-pub fn style_and_root(
-    data: &cli::Data,
-) -> eyre::Result<(Option<path::PathBuf>, Option<path::PathBuf>)> {
+pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, path::PathBuf)>> {
     let style_file = resolve_style_file(&data)?;
     let style_root = match &data.json.style_root {
         None => None,
@@ -62,40 +60,35 @@ pub fn style_and_root(
             Some(
                 utils::dir_or_err(path.as_path())
                     .wrap_err("Invalid configuration for 'styleRoot'")
-                    .suggestion("Please make sure that 'styleRoot' is a valid directory and check the access permissions")?,
+                    .suggestion("Please make sure that 'styleRoot' is a valid directory and check the access permissions")?
+                    .canonicalize()
+                    .unwrap(),
             )
         }
     };
 
-    // this variable exist only for demonstration purposes. later we can simply assume that
-    // style_root is a Some() value and unwrap it in case style_file is also Some()
-    let _copy_style;
-
     if style_root.is_none() && style_file.is_err() {
         // scenario: no root folder and no style file specified, simply run clang-format
         // and assume that there is a .clang-format file in the root folder of all files
-        _copy_style = false;
+        Ok(None)
     } else if style_root.is_some() && style_file.is_ok() {
         // scenario: root folder and style file have been specified. it is necessary to copy
         // the style file to the root folder before executing clang-format
-        _copy_style = true;
+        Ok(Some((style_file.unwrap(), style_root.unwrap())))
     } else if style_root.is_some() && style_file.is_err() {
         // unsupported scenario: root specified but missing style file
-        return Err(style_file.unwrap_err().wrap_err(
+        Err(style_file.unwrap_err().wrap_err(
             "A valid style file must be specified for configurations with the field 'styleRoot'",
-        )).suggestion("Specify the style file using the command line parameter or the field 'styleRoot' within the configuration file.");
+        )).suggestion("Specify the style file using the command line parameter or the field 'styleRoot' within the configuration file.")
     } else {
         // unsupported scenario: style file specified but missing root folder
-        return Err(eyre::eyre!("Missing root folder configuration",)
+        Err(eyre::eyre!("Missing root folder configuration",)
             .wrap_err(format!(
                 "Found style file '{}' but could not find root folder configuration",
                 style_file.unwrap().to_string_lossy()
             ))
-            .suggestion("Please add the field 'styleRoot' to your configuration file."));
+            .suggestion("Please add the field 'styleRoot' to your configuration file."))
     }
-
-    let style_file = style_file.ok(); // transform to Option, error has already been used.
-    Ok((style_file, style_root))
 }
 
 pub fn command(data: &cli::Data) -> path::PathBuf {

@@ -76,10 +76,14 @@ impl Runner {
             .output()?;
 
         if let Err(err) = Runner::eval_status(cmd.status) {
-            log::error!(
-                "Execution failed:\n{}",
-                String::from_utf8_lossy(&cmd.stderr)
-            );
+            let stderr = String::from_utf8_lossy(&cmd.stderr);
+
+            if stderr.len() != 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("{}\n---\n{}", err, stderr),
+                ));
+            }
             return Err(err);
         }
         Ok(())

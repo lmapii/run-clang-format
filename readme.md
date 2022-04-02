@@ -68,7 +68,7 @@ With such a folder structure it would be necessary to copy the `.clang-format` f
 
 > **Remark:** The `--style` parameter, if set, overrides the `styleFile` field.
 
-> **Remark:** The tool will check whether a `.clang-format` file with different content already exists in `styleRoot` - and abort with an error if that is the case.
+> **Remark:** The tool will check whether a `.clang-format` file *with different content* already exists in `styleRoot` - and abort with an error if that is the case. Any user manually copying the `.clang-format` file to the root folder (e.g., to work with an editor supporting `clang-format`) would therefore be notified if their style file is outdated.
 
 
 ### Scenario C: The `.clang-format` file is selected during runtime
