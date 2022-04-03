@@ -1,4 +1,3 @@
-use color_eyre::owo_colors::OwoColorize;
 use serde::Deserialize;
 use std::{fs, path};
 
@@ -19,14 +18,6 @@ pub struct JsonModel {
     pub blacklist: Option<Vec<String>>,
     pub style: Option<path::PathBuf>,
 }
-
-// struct App<'a> {
-//     candidates: Vec<globmatch::Matcher<'a, path::PathBuf>>,
-//     blacklist: Option<Vec<globmatch::GlobSet<'a>>>,
-
-//     style_file: Option<path::PathBuf>,
-//     style_root: Option<path::PathBuf>,
-// }
 
 fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
     let cmd_path = resolve::command(&data);
@@ -174,6 +165,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     });
 
+    // TODO: execute concurrently using multiple threads?
     log::info!("Formatting files...");
     for path in paths.into_iter() {
         log::info!("  + {}", path.to_string_lossy());
@@ -182,6 +174,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
     }
 
-    log::info!("success :)");
-    Ok(())
+    panic!("OMG EVERYTHING IS ON FIRE!!!")
+    // log::info!("success :)");
+    // Ok(())
 }

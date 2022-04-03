@@ -1,3 +1,4 @@
+mod handlers;
 mod logging;
 pub mod utils;
 
@@ -66,6 +67,12 @@ impl Builder {
                 arg!(-c --command ... "Optional path to executable or clang-format command. Overrides <JSON> configuration, defaults to `clang-format`")
                     // .default_value("clang-format")
                     .allow_invalid_utf8(true)
+                    .takes_value(true)
+                    .required(false),
+            )
+            .arg(
+                arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use for executing clang-format command.")
+                    .default_value("1")
                     .takes_value(true)
                     .required(false),
             )

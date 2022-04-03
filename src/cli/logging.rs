@@ -1,6 +1,7 @@
 use env_logger::fmt;
-
 use std::io::Write;
+
+use super::handlers;
 
 fn log_level(matches: &clap::ArgMatches) -> log::Level {
     let lvl = if matches.is_present("quiet") {
@@ -35,6 +36,7 @@ pub fn setup(matches: &clap::ArgMatches) {
                 log::Level::Trace => ("<t>", s.set_bold(false).set_color(fmt::Color::Magenta)),
             };
 
+            // TODO: remove timestamp when adding indicatif
             let (target, tstamp) = match lvl {
                 l if l >= log::Level::Debug => (record.module_path(), f.timestamp_millis()),
                 _ => (None, f.timestamp_seconds()),
@@ -55,6 +57,7 @@ pub fn setup(matches: &clap::ArgMatches) {
     }
 
     color_eyre::config::HookBuilder::default()
+        .panic_message(handlers::PanicMessage)
         .display_env_section(std::env::var("DISPLAY_LOCATION").is_ok())
         .install()
         .unwrap();

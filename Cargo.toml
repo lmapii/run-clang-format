@@ -8,7 +8,7 @@ in a JSON input file.
 """
 # documentation = "https://docs.rs/globmatch"
 # homepage = "https://github.com/lmapii/globmatch"
-# repository = "https://github.com/lmapii/globmatch"
+repository = "https://github.com/lmapii/run_clang_format"
 keywords = ["clang-format", "glob", "search"]
 
 license-file = "LICENSE"
