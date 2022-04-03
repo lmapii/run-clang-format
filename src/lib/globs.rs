@@ -1,7 +1,5 @@
 use std::path;
 
-use globmatch;
-
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
@@ -14,12 +12,12 @@ fn extract_err<T>(candidates: Vec<Result<T, String>>) -> eyre::Result<Vec<T>> {
         })
         .collect();
 
-    if failures.len() > 0 {
+    if !failures.is_empty() {
         eyre::bail!(
             "Failed to compile patterns: \n{}",
             failures
                 .iter()
-                .map(|err| format!("{}", err))
+                .map(|err| err.to_string())
                 .collect::<Vec<_>>()
                 .join("\n")
         )
@@ -28,7 +26,7 @@ fn extract_err<T>(candidates: Vec<Result<T, String>>) -> eyre::Result<Vec<T>> {
 }
 
 pub fn build_matchers<P>(
-    globs: &Vec<String>,
+    globs: &[String],
     root: P,
     case_sensitive: bool,
 ) -> eyre::Result<Vec<globmatch::Matcher<path::PathBuf>>>
@@ -38,7 +36,7 @@ where
     let candidates: Vec<Result<_, String>> = globs
         .iter()
         .map(|pattern| {
-            globmatch::Builder::new(&pattern)
+            globmatch::Builder::new(pattern)
                 .case_sensitive(case_sensitive)
                 .build(root.as_ref())
         })
@@ -49,13 +47,13 @@ where
 }
 
 pub fn build_glob_sets(
-    globs: &Vec<String>,
+    globs: &[String],
     case_sensitive: bool,
 ) -> eyre::Result<Vec<globmatch::GlobSet>> {
     let candidates: Vec<Result<_, String>> = globs
         .iter()
         .map(|pattern| {
-            globmatch::Builder::new(&pattern)
+            globmatch::Builder::new(pattern)
                 .case_sensitive(case_sensitive)
                 .build_glob_set()
         })
@@ -74,7 +72,7 @@ where
 {
     let mut filtered = vec![];
 
-    let paths: Vec<_> = candidates
+    let paths = candidates
         .into_iter()
         .map(|m| {
             m.into_iter()
@@ -87,22 +85,21 @@ where
         .filter(|path| match &blacklist {
             None => true,
             Some(patterns) => {
-                let do_filter = !patterns
+                let do_filter = patterns
                     .iter()
                     .try_for_each(|glob| match glob.is_match(path) {
                         true => None,      // path is a match, abort on first match in blacklist
                         false => Some(()), // path is not a match, continue with 'ok'
                     })
-                    .is_some(); // the value remains "Some" if no match was encountered
+                    .is_none(); // the value remains "Some" if no match was encountered
                 if do_filter {
                     filtered.push(path::PathBuf::from(path));
                 }
                 !do_filter
             }
-        })
-        .collect();
+        });
 
-    let mut paths: Vec<_> = paths.into_iter().collect();
+    let mut paths: Vec<_> = paths.collect();
     paths.sort_unstable();
     paths.dedup();
 
@@ -119,7 +116,7 @@ where
     filtered.sort_unstable();
     filtered.dedup();
 
-    if filtered.len() > 0 {
+    if !filtered.is_empty() {
         log::debug!(
             "filtered \n{}",
             filtered

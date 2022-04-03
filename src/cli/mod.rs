@@ -99,7 +99,7 @@ impl Builder {
     }
 
     pub fn parse(self) -> eyre::Result<Data> {
-        if let Some(_) = self.matches.subcommand_matches("schema") {
+        if self.matches.subcommand_matches("schema").is_some() {
             let _ = Builder::app().print_help();
             println!(
                 "\n\nThe following schema is used for <JSON>:\n{}",
@@ -116,7 +116,7 @@ impl Builder {
             true => {
                 let style_path = self.path_for_key("style", true)?;
                 let path = utils::file_with_name_or_ext(&style_path, ".clang-format")
-                    .wrap_err(format!("Invalid parameter --style"))?;
+                    .wrap_err("Invalid parameter --style")?;
                 Some(path)
             }
         };

@@ -45,7 +45,7 @@ impl color_eyre::section::PanicMessage for PanicMessage {
         } else {
             write!(f, "<unknown>")?;
         }
-        write!(f, "\n")?;
+        writeln!(f)?;
 
         Ok(())
     }

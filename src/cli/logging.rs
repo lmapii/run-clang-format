@@ -4,7 +4,7 @@ use std::io::Write;
 use super::handlers;
 
 fn log_level(matches: &clap::ArgMatches) -> log::Level {
-    let lvl = if matches.is_present("quiet") {
+    if matches.is_present("quiet") {
         log::Level::Error
     } else {
         match matches.occurrences_of("verbose") {
@@ -15,10 +15,9 @@ fn log_level(matches: &clap::ArgMatches) -> log::Level {
             // _ => log::Level::Warn,
             0 | 1 => log::Level::Info,
             2 => log::Level::Debug,
-            3 | _ => log::Level::Trace,
+            _ => log::Level::Trace, // 3 | _
         }
-    };
-    lvl
+    }
 }
 
 pub fn setup(matches: &clap::ArgMatches) {

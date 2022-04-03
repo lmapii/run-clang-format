@@ -20,7 +20,7 @@ pub struct JsonModel {
 }
 
 fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
-    let cmd_path = resolve::command(&data);
+    let cmd_path = resolve::command(data);
     let cmd = cmd::Runner::new(&cmd_path);
     let version = cmd
         .get_version()
@@ -125,7 +125,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         log::info!("Placing to format root {}", style_root.to_string_lossy());
     }
 
-    let match_case = if cfg!(windows) { false } else { true };
+    let match_case = !cfg!(windows);
     let candidates = globs::build_matchers(&data.json.paths, &data.json.root, match_case)
         .wrap_err("Error while parsing 'paths'")
         .suggestion(format!(
@@ -139,7 +139,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         Some(paths) => {
             blacklist_entries = paths;
             Some(
-                globs::build_glob_sets(&blacklist_entries, match_case)
+                globs::build_glob_sets(blacklist_entries, match_case)
                     .wrap_err("Failed to compile patterns for 'paths'")
                     .suggestion(format!(
                         "Check the format of the field 'paths' in {}.",
@@ -149,10 +149,9 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     };
 
-    let paths: Vec<_> = globs::match_paths(candidates, blacklist)
+    let paths = globs::match_paths(candidates, blacklist)
         .into_iter()
-        .map(|p| p.canonicalize().unwrap())
-        .collect();
+        .map(|p| p.canonicalize().unwrap());
 
     let cmd = get_command(&data)?;
     let style = place_style_file(style_and_root)?;
@@ -167,14 +166,13 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
     // TODO: execute concurrently using multiple threads?
     log::info!("Formatting files...");
-    for path in paths.into_iter() {
+    for path in paths {
         log::info!("  + {}", path.to_string_lossy());
         let _ = cmd.format(path.as_path())
             .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
             .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
     }
 
-    panic!("OMG EVERYTHING IS ON FIRE!!!")
-    // log::info!("success :)");
-    // Ok(())
+    log::info!("success :)");
+    Ok(())
 }

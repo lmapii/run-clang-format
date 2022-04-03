@@ -55,10 +55,9 @@ impl Runner {
         let stdout = String::from_utf8_lossy(&cmd.stdout);
 
         let re = regex::Regex::new(r".*version ([\d]+)\.([\d]+)\.([\d]+).*").unwrap();
-        let caps = re.captures(&stdout).ok_or(io::Error::new(
-            io::ErrorKind::Other,
-            "Failed to match version",
-        ))?;
+        let caps = re
+            .captures(&stdout)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Failed to match version"))?;
 
         Ok(format!("{}.{}.{}", &caps[1], &caps[2], &caps[3]))
     }

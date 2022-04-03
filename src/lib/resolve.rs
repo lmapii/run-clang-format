@@ -46,7 +46,7 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
 }
 
 pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, path::PathBuf)>> {
-    let style_file = resolve_style_file(&data)?;
+    let style_file = resolve_style_file(data)?;
     let style_root = match &data.json.style_root {
         None => None,
         Some(path) => {
@@ -67,27 +67,30 @@ pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, p
         }
     };
 
-    if style_root.is_none() && style_file.is_err() {
-        // scenario: no root folder and no style file specified, simply run clang-format
-        // and assume that there is a .clang-format file in the root folder of all files
-        Ok(None)
-    } else if style_root.is_some() && style_file.is_ok() {
-        // scenario: root folder and style file have been specified. it is necessary to copy
-        // the style file to the root folder before executing clang-format
-        Ok(Some((style_file.unwrap(), style_root.unwrap())))
-    } else if style_root.is_some() && style_file.is_err() {
-        // unsupported scenario: root specified but missing style file
-        Err(style_file.unwrap_err().wrap_err(
-            "A valid style file must be specified for configurations with the field 'styleRoot'",
-        )).suggestion("Specify the style file using the command line parameter or the field 'styleRoot' within the configuration file.")
+    if let Err(style_err) = style_file {
+        match style_root {
+            // scenario: no root folder and no style file specified, simply run clang-format
+            // and assume that there is a .clang-format file in the root folder of all files
+            None => Ok(None),
+            // unsupported scenario: root specified but missing style file
+            Some(_) =>
+                Err(style_err.wrap_err(
+                        "A valid style file must be specified for configurations with the field 'styleRoot'",
+                    )).suggestion("Specify the style file using the command line parameter or the field 'styleRoot' within the configuration file.")
+        }
     } else {
-        // unsupported scenario: style file specified but missing root folder
-        Err(eyre::eyre!("Missing root folder configuration",)
-            .wrap_err(format!(
-                "Found style file '{}' but could not find root folder configuration",
-                style_file.unwrap().to_string_lossy()
-            ))
-            .suggestion("Please add the field 'styleRoot' to your configuration file."))
+        match style_root {
+            // scenario: root folder and style file have been specified. it is necessary to copy
+            // the style file to the root folder before executing clang-format
+            Some(style_root) => Ok(Some((style_file.unwrap(), style_root))),
+            // unsupported scenario: style file specified but missing root folder
+            None => Err(eyre::eyre!("Missing root folder configuration",)
+                .wrap_err(format!(
+                    "Found style file '{}' but could not find root folder configuration",
+                    style_file.unwrap().to_string_lossy()
+                ))
+                .suggestion("Please add the field 'styleRoot' to your configuration file.")),
+        }
     }
 }
 
