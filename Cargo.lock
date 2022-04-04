@@ -192,6 +192,8 @@ checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
 [[package]]
 name = "globmatch"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e947da82de004e486c7055c8123cb86a7738b9142de657110707a9eb2a0f9565"
 dependencies = [
  "globset",
  "walkdir",
