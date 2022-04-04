@@ -42,7 +42,7 @@ jobs:
   build-release:
     name: build-release
     needs: ['create-release']
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.triple.os }}
     env:
       TARGET_DIR: ./target
       RUST_BACKTRACE: 1 # Emit backtraces on panics.
