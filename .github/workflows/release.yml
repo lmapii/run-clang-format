@@ -55,7 +55,7 @@ jobs:
           # - { build: 'linux-armv7',    os: 'ubuntu-latest',  target: 'armv7-unknown-linux-gnueabihf', cross: true  } # armv7
           # - { build: 'linux-armv6',    os: 'ubuntu-latest',  target: 'arm-unknown-linux-gnueabihf',   cross: true  } # armv6
           - { build: 'macos-x86_64',   os: 'macos-latest',   target: 'x86_64-apple-darwin',           cross: false }
-          - { build: 'macos-arm ,  '   os: 'macos-latest',   target: 'aarch64-apple-darwin',          cross: true  } # arm
+          - { build: 'macos-arm',      os: 'macos-latest',   target: 'aarch64-apple-darwin',          cross: true  } # arm
           - { build: 'windows-x86_64', os: 'windows-latest', target: 'x86_64-pc-windows-msvc',        cross: false }
           - { build: 'windows-i686',   os: 'windows-latest', target: 'i686-pc-windows-msvc',          cross: false }
         toolchain:
