@@ -33,7 +33,7 @@ The content of the configuration file is explained based on the following exampl
 }
 ```
 
-- **paths** contains a list of paths or globs *relative to the directory of the JSON configuration file* that should be passed to `clang-format. The glob syntax is described in the used [globset crate](https://docs.rs/globset/latest/globset/index.html#syntax) and is not repeated here.
+- **paths** contains a list of paths or globs *relative to the directory of the JSON configuration file* that should be passed to `clang-format`. The glob syntax is described in the used [globset crate](https://docs.rs/globset/latest/globset/index.html#syntax) and is not repeated here (yet).
 
 > *Remark:* Typically, globs do not contain relative path components. This tool, however, allows a relative path "prefix" before any glob that determines the root folder for a recursive search.
 
@@ -43,13 +43,13 @@ The content of the configuration file is explained based on the following exampl
 
 - **styleFile** is an optional parameter that specifies the path to the `.clang-format` file that should be used. See the below scenarios description for details.
 
-> **Remark:* The command line parameter `--style` overrides the provided style file. The style file must either have the exact name `.clang-format` or use the file name extension `.clang-format`.
+> *Remark:* The command line parameter `--style` overrides the provided style file. The style file must either have the exact name `.clang-format` or use the file name extension `.clang-format`.
 
-**styleRoot** if a `.clang-format` file is defined, this tool will copy the style file to the provided directory before formatting the files, and will remove it on errors or onc all files have been formatted.
+- **styleRoot** if a `.clang-format` file is defined, this tool will copy the style file to the provided directory before formatting the files, and will remove it on errors or onc all files have been formatted.
 
-> **Remark:* If the execution is terminated early (using, e.g., `ctrl+c`), the tool will not be able to delete the temporary file.
->
-**command** optional field specifying the executable or command to use for formatting. By default the tool will try to use `clang-format`.
+> *Remark:* If the execution is terminated early (using, e.g., `ctrl+c`), the tool will not be able to delete the temporary file.
+
+- **command** optional field specifying the executable or command to use for formatting. By default the tool will try to use `clang-format`.
 
 > **Remark:* The command line parameter `--command` overrides this *command* field.
 
