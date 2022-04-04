@@ -96,7 +96,6 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
           staging="run_clang_format-${{ needs.create-release.outputs.app_version }}-${{ matrix.target }}"
           mkdir -p "$staging"/{complete,doc}
 
