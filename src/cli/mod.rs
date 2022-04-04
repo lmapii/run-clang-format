@@ -70,12 +70,12 @@ impl Builder {
                     .takes_value(true)
                     .required(false),
             )
-            .arg(
-                arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use for executing clang-format command.")
-                    .default_value("1")
-                    .takes_value(true)
-                    .required(false),
-            )
+            // .arg(
+            //     arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use for executing clang-format command.")
+            //         .default_value("1")
+            //         .takes_value(true)
+            //         .required(false),
+            // )
             .arg(
                 arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
                     .global(true)
@@ -140,12 +140,6 @@ impl Builder {
     }
 
     fn path_for_key(&self, key: &str, check_exists: bool) -> eyre::Result<path::PathBuf> {
-        // println!(
-        //     "path_for_key {:?} is {:?}",
-        //     key,
-        //     self.matches.value_of_os(key)
-        // );
-
         let path = self
             .matches
             .value_of_os(key)

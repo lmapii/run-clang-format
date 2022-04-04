@@ -94,7 +94,7 @@ jobs:
   tests:
     needs: [compile]
     name: Test ${{ matrix.tuple.build }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.tuple.os }}
     strategy:
       fail-fast: false
       matrix:
