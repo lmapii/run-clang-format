@@ -12,7 +12,7 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
             let mut full_path = path::PathBuf::from(data.json.root.as_path());
             full_path.push(path);
             Some(
-                utils::file_with_name(full_path, ".clang-format")
+                utils::file_with_name_or_ext(full_path, ".clang-format")
                     .wrap_err("Invalid configuration for 'styleFile''")
                     .suggestion(format!(
                         "Check the content of the field 'styleFile' in {}.",

@@ -85,7 +85,7 @@ impl Builder {
             .subcommand_negates_reqs(true)
             .subcommand(
                 clap::Command::new("schema")
-                    .about("Shows help and prints the schema used for <JSON>"),
+                    .about("Print the schema used for the <JSON> configuration file"),
             )
     }
 
@@ -100,11 +100,12 @@ impl Builder {
 
     pub fn parse(self) -> eyre::Result<Data> {
         if self.matches.subcommand_matches("schema").is_some() {
-            let _ = Builder::app().print_help();
-            println!(
-                "\n\nThe following schema is used for <JSON>:\n{}",
-                JsonModel::schema(),
-            );
+            // let _ = Builder::app().print_help();
+            // println!(
+            //     "\n\nThe following schema is used for <JSON>:\n{}",
+            //     JsonModel::schema(),
+            // );
+            println!("{}", JsonModel::schema(),);
             process::exit(0);
         }
 

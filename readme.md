@@ -2,7 +2,64 @@
 
 [![Build status](https://github.com/lmapii/run_clang_format/workflows/ci/badge.svg)](https://github.com/lmapii/run_clang_format/actions)
 
-CLI application for running an installed [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) on a set of files, specified using globs in a `.json` configuration file.
+CLI application for running an installed [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) and an existing `.clang-format` file on a set of files, specified using globs in a `.json` configuration file.
+
+## Usage
+
+The most basic execution of this CLI tool is as following:
+
+```bash
+$ run_clang_format path/to/format.json
+```
+
+Excecute `run_clang_format --help` for more details, or `run_clang_format schema` for a complete schema description of the configuration file.
+
+The content of the configuration file is explained based on the following example:
+
+```json
+{
+  "paths": [
+    "../path/to/some/code/*.[ch]",
+    "../../another/path/**/*.[ch]",
+  ],
+  "blacklist": [
+    "FreeRTOSConfig.h",
+    "*.pb.[ch]",
+    "sdk_config.h"
+  ],
+  "styleFile": "./path/to/.clang-format",
+  "styleRoot": "../",
+  "command": "/Users/bugmenot/Downloads/clang-format"
+}
+```
+
+- **paths** contains a list of paths or globs *relative to the directory of the JSON configuration file* that should be passed to `clang-format. The glob syntax is described in the used [globset crate](https://docs.rs/globset/latest/globset/index.html#syntax) and is not repeated here.
+
+> *Remark:* Typically, globs do not contain relative path components. This tool, however, allows a relative path "prefix" before any glob that determines the root folder for a recursive search.
+
+> *Remark:* Currently this tool skips all hidden files and folders (subject to change) to avoid walking through `.git` repositories.
+
+- **blacklist** contains a list of paths, filenames or globs that should be excluded from formatting. Notice that a leading `**/` wildcard is not required, but added automatically for each item in the blacklist.
+
+- **styleFile** is an optional parameter that specifies the path to the `.clang-format` file that should be used. See the below scenarios description for details.
+
+> **Remark:* The command line parameter `--style` overrides the provided style file. The style file must either have the exact name `.clang-format` or use the file name extension `.clang-format`.
+
+**styleRoot** if a `.clang-format` file is defined, this tool will copy the style file to the provided directory before formatting the files, and will remove it on errors or onc all files have been formatted.
+
+> **Remark:* If the execution is terminated early (using, e.g., `ctrl+c`), the tool will not be able to delete the temporary file.
+>
+**command** optional field specifying the executable or command to use for formatting. By default the tool will try to use `clang-format`.
+
+> **Remark:* The command line parameter `--command` overrides this *command* field.
+
+## Planned/possible improvements
+
+- [x] Cross-platform compilation with Github actions
+- [ ] Don't simply exclude hidden files and folders?
+- [ ] Testing (limited unit-tests but regression tests for all scenarios)
+- [ ] Concurrent execution of `clang-format` using a command line parameter `-j --jobs`
+- [ ] Maybe switch to [indicatif](https://docs.rs/indicatif/latest/indicatif/) for reporting progress
 
 ## Use-Cases
 
@@ -36,7 +93,7 @@ Easy, neither the `--style` nor the corresponding entries in the `.json` configu
 
 ### Scenario B: A `.clang-format` file exists but is placed stored outside the root folder
 
-This might seem a bit odd, especially if you're used to how `git` submodules work, but it is quite a common scenario in large projects. Such projects consist of multiple repositories that do not have a flat folder structure. Cloning repositories into other repositories is typically avoided, and therefore there exist no files in the root directory:
+This might seem a bit odd, especially if you're used to how `git` submodules work, but it is quite a common scenario in large projects. Such projects consist of multiple repositories that do not have a flat folder structure. Cloning repositories into other repositories is typically avoided, therefore there are no files in the root directory:
 
 ```
 ProjectRoot
@@ -65,11 +122,11 @@ With such a folder structure it would be necessary to copy the `.clang-format` f
 
  - The `.clang-format` file can either be specified using the `--style` command line parameter, or is specified directly within the `.json` configuration file using the `styleFile` field.
 
-- The `.json` configuration file also needs to specify the `styleRoot` folder to which the tool will *temporarily* copy the format file.
+- The `.json` configuration file also needs to specify the `styleRoot` folder to which the tool will *temporarily* copy the format file. Once the execution is complete, the temporary `.clang-format` file will be removed.
 
-> **Remark:** The `--style` parameter, if set, overrides the `styleFile` field.
+> *Remark:* The `--style` parameter, if set, overrides the `styleFile` field.
 
-> **Remark:** The tool will check whether a `.clang-format` file *with different content* already exists in `styleRoot` - and abort with an error if that is the case. Any user manually copying the `.clang-format` file to the root folder (e.g., to work with an editor supporting `clang-format`) would therefore be notified if their style file is outdated.
+> *Remark:* The tool will check whether a `.clang-format` file *with different content* already exists in `styleRoot` - and abort with an error if that is the case. Any user manually copying the `.clang-format` file to the root folder (e.g., to work with an editor supporting `clang-format`) would therefore be notified if their style file is outdated.
 
 
 ### Scenario C: The `.clang-format` file is selected during runtime
@@ -118,8 +175,8 @@ ProjectRoot
 
 ### I don't want to specify the root for `clang-format`
 
-This tool does not determine the common denominator for all paths to place the `.clang-format` file there. Two reasons:
+This tool does not determine the common denominator for all paths to place the `.clang-format` file there:
 
-- First of all, no common root folder except the file system root might exist.
-- Second, in case of failures or when aborting the tools you don't want `.clang-format` files flying around in your folder structure.
-- Third, it would need special handling for *Scenario A*.
+- No common root folder might exist, except the file system root.
+- In case of failures or when aborting the tool, you don't want `.clang-format` files flying around in your folder structure.
+- It would need special handling for *Scenario A*.

@@ -54,7 +54,7 @@ fn place_style_file(
     let (src_file, dst_root) = file_and_root.unwrap();
     let mut dst_file = path::PathBuf::from(dst_root.as_path());
     // by adding the filename of the style file we get the final name of the destination file
-    dst_file.push(src_file.as_path().file_name().unwrap());
+    dst_file.push(".clang-format");
 
     // it may happen that there is already a .clang-format file at the destination folder, e.g.,
     // because the user placed it there while working with an editor supporting `clang-format`.
