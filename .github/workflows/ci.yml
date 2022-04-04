@@ -70,7 +70,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features full --target=${{ matrix.triple.target }}
+          args: --target=${{ matrix.triple.target }}
           use-cross: ${{ matrix.triple.cross }}
 
   # tests are only executed on native
