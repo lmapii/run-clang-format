@@ -12,8 +12,6 @@ on:
   schedule:
   - cron: '00 01 * * *'
 
-name: Continuous integration
-
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
