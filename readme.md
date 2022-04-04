@@ -1,7 +1,8 @@
+# run_clang_format
 
-clang-format file required,
-if not provided in neither the .json file nor as parameter, clang-format will still be executed
-but without the --style=file parameter ?
+[![Build status](https://github.com/lmapii/run_clang_format/workflows/ci/badge.svg)](https://github.com/lmapii/run_clang_format/actions)
+
+CLI application for running an installed [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) on a set of files, specified using globs in a `.json` configuration file.
 
 ## Use-Cases
 

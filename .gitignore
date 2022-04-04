@@ -1,2 +1,14 @@
+.DS_Store
+.idea
+thumbs.db
+*.zip
+*.pyc
+*_pb2.py
+*.bak
+*.hex
+*.[oa]
+*.pb.go
+.vscode/ipch/**
+
 /target
 _notes.md
