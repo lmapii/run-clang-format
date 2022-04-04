@@ -74,13 +74,12 @@ where
 
     let paths = candidates
         .into_iter()
-        .map(|m| {
+        .flat_map(|m| {
             m.into_iter()
                 .filter_entry(|p| !globmatch::is_hidden_entry(p))
                 .flatten()
                 .collect::<Vec<_>>()
         })
-        .flatten()
         .filter(|path| path.as_path().is_file()) // accept only files
         .filter(|path| match &blacklist {
             None => true,
