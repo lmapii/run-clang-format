@@ -27,6 +27,7 @@ regex = "1.5.5"
 scopeguard = "1.1.0"
 # globmatch = { path = "../globmatch" }
 globmatch = "0.1"
+rayon = "1.5"
 
 [dev-dependencies]
 doc-comment = "0.3"

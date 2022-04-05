@@ -1,3 +1,4 @@
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::Deserialize;
 use std::{fs, path};
 
@@ -164,15 +165,39 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     });
 
-    // TODO: execute concurrently using multiple threads?
-    log::info!("Formatting files...");
-    for path in paths {
-        log::info!("  + {}", path.to_string_lossy());
-        let _ = cmd.format(path.as_path())
-            .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
-            .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
+    // configure rayon to use the specified number of threads (globally)
+    let jobs = if data.jobs == 0 { 1u8 } else { data.jobs };
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(jobs.into())
+        .build_global();
+
+    if let Err(err) = pool {
+        return Err(err)
+            .wrap_err(format!("Failed to create thread pool of size {}", jobs))
+            .suggestion("Please try to decrease the number of jobs");
     }
 
+    log::info!("Formatting files...");
+    let paths: Vec<_> = paths.collect();
+    let _ = paths
+        .into_par_iter()
+        .try_for_each(|path| format_path(&cmd, path))?;
+
+    // for path in paths {
+    //     format_path(&cmd, path)?;
+    // }
+
     log::info!("success :)");
+    Ok(())
+}
+
+fn format_path<P>(cmd: &cmd::Runner, path: P) -> eyre::Result<()>
+where
+    P: AsRef<path::Path>,
+{
+    log::info!("  + {}", path.as_ref().to_string_lossy());
+    let _ = cmd.format(path.as_ref())
+        .wrap_err(format!("Failed to format {}", path.as_ref().to_string_lossy()))
+        .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
     Ok(())
 }

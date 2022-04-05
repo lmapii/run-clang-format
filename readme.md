@@ -58,7 +58,7 @@ The content of the configuration file is explained based on the following exampl
 - [x] Cross-platform compilation with Github actions
 - [ ] Don't simply exclude hidden files and folders?
 - [ ] Testing (limited unit-tests but regression tests for all scenarios)
-- [ ] Concurrent execution of `clang-format` using a command line parameter `-j --jobs`
+- [x] Concurrent execution of `clang-format` using a command line parameter `-j --jobs`
 - [ ] Maybe switch to [indicatif](https://docs.rs/indicatif/latest/indicatif/) for reporting progress
 
 ## Use-Cases
