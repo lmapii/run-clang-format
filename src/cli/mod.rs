@@ -6,6 +6,7 @@ use std::path;
 use std::process;
 
 use clap::{arg, crate_authors, crate_description, crate_name, crate_version};
+
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
@@ -37,6 +38,7 @@ pub struct Data {
     pub json: JsonModel,
     pub style: Option<path::PathBuf>,
     pub command: Option<path::PathBuf>,
+    pub jobs: u8,
 }
 
 pub struct Builder {
@@ -70,12 +72,12 @@ impl Builder {
                     .takes_value(true)
                     .required(false),
             )
-            // .arg(
-            //     arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use for executing clang-format command.")
-            //         .default_value("1")
-            //         .takes_value(true)
-            //         .required(false),
-            // )
+            .arg(
+                arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use. Default is 1, maximum value is 255")
+                    .default_value("1")
+                    .takes_value(true)
+                    .required(false),
+            )
             .arg(
                 arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
                     .global(true)
@@ -133,10 +135,19 @@ impl Builder {
         //     .value_of_os("command")
         //     .and(Some(self.path_for_key("command", false)?));
 
+        let jobs: u8 = self
+            .matches
+            .value_of("jobs")
+            .unwrap()
+            .parse()
+            .or(Err(eyre!("Invalid parameter --jobs")))
+            .suggestion("Please provide a number in the range [0 .. 255]")?;
+
         Ok(Data {
             json,
             style,
             command,
+            jobs,
         })
     }
 
