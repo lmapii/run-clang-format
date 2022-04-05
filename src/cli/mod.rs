@@ -140,7 +140,7 @@ impl Builder {
             .value_of("jobs")
             .unwrap()
             .parse()
-            .or(Err(eyre!("Invalid parameter --jobs")))
+            .map_err(|_| eyre!("Invalid parameter --jobs"))
             .suggestion("Please provide a number in the range [0 .. 255]")?;
 
         Ok(Data {

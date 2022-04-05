@@ -166,7 +166,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     });
 
     // configure rayon to use the specified number of threads (globally)
-    let jobs = if data.jobs <= 0 { 1u8 } else { data.jobs };
+    let jobs = if data.jobs == 0 { 1u8 } else { data.jobs };
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(jobs.into())
         .build_global();
