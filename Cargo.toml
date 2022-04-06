@@ -25,8 +25,8 @@ eyre = "0.6.7"
 color-eyre = "0.6.1"
 regex = "1.5.5"
 scopeguard = "1.1.0"
-globmatch = { path = "../globmatch" }
-# globmatch = "0.1"
+# globmatch = { path = "../globmatch" }
+globmatch = "0.1"
 rayon = "1.5"
 indicatif = "0.16"
 console = { version = "0.15", default-features = false, features = ["ansi-parsing"] }
