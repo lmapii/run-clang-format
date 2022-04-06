@@ -1,6 +1,7 @@
+use std::{fs, path};
+
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::Deserialize;
-use std::{fs, path};
 
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
@@ -20,11 +21,34 @@ pub struct JsonModel {
     pub style: Option<path::PathBuf>,
 }
 
+struct LogStep {
+    step: u8,
+}
+
+impl LogStep {
+    fn new() -> LogStep {
+        LogStep { step: 1 }
+    }
+
+    fn next(&mut self) -> String {
+        let str = format!(
+            "{}",
+            console::style(format!("[ {:2} ]", self.step)).bold().dim()
+        );
+        self.step += 1;
+        if log_pretty() {
+            str
+        } else {
+            "".to_string()
+        }
+    }
+}
+
 fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
     let cmd_path = resolve::command(data);
-    let cmd = cmd::Runner::new(&cmd_path);
-    let version = cmd
-        .get_version()
+    let mut cmd = cmd::Runner::new(&cmd_path);
+
+    cmd.check()
         .wrap_err(format!(
             "Failed to execute '{}'",
             cmd_path.to_string_lossy()
@@ -34,17 +58,12 @@ fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
             cmd_path.to_string_lossy()
         ))?;
 
-    log::info!(
-        "Using '{}', version {}",
-        cmd_path.to_string_lossy(),
-        version
-    );
-
     Ok(cmd)
 }
 
 fn place_style_file(
     file_and_root: Option<(path::PathBuf, path::PathBuf)>,
+    step: &mut LogStep,
 ) -> eyre::Result<Option<path::PathBuf>> {
     if file_and_root.is_none() {
         // in case no style file has been specified there's nothing to do
@@ -78,8 +97,9 @@ fn place_style_file(
             ))?;
 
         if content_src == content_dst {
-            log::warn!(
-                "Existing style file matches {}, skipping placement",
+            log::info!(
+                "{} Existing style file matches {}, skipping placement",
+                step.next(),
                 src_file.to_string_lossy()
             );
             return Ok(None);
@@ -98,10 +118,11 @@ fn place_style_file(
     }
 
     log::info!(
-        "Copying '{}' to '{}'",
-        src_file.to_string_lossy(),
-        dst_root.to_string_lossy()
+        "{} Copying style file to {}",
+        step.next(),
+        console::style(dst_file.to_string_lossy()).bold(),
     );
+
     // no file found at destination, copy the provided style file
     let _ = fs::copy(&src_file, &dst_file)
         .wrap_err(format!(
@@ -117,13 +138,21 @@ fn place_style_file(
 }
 
 pub fn run(data: cli::Data) -> eyre::Result<()> {
+    log::info!("");
+    let mut step = LogStep::new();
+
     let style_and_root = resolve::style_and_root(&data)?;
-    if let Some((style_file, style_root)) = &style_and_root {
+    if let Some((style_file, _)) = &style_and_root {
         log::info!(
-            "Using parameters from style file {}",
-            style_file.to_string_lossy(),
+            "{} Found style file {}",
+            step.next(),
+            console::style(style_file.to_string_lossy()).bold(),
         );
-        log::info!("Placing to format root {}", style_root.to_string_lossy());
+    } else {
+        log::info!(
+            "{} No style file specified, assuming .clang-format exists in the project tree",
+            step.next()
+        );
     }
 
     let match_case = !cfg!(windows);
@@ -150,17 +179,39 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         }
     };
 
-    let paths = globs::match_paths(candidates, blacklist)
-        .into_iter()
-        .map(|p| p.canonicalize().unwrap());
+    let (paths, filtered) = globs::match_paths(candidates, blacklist);
+    let paths = paths.into_iter().map(|p| p.canonicalize().unwrap());
+
+    let filtered = if filtered.is_empty() {
+        "".to_string()
+    } else {
+        format!(" (filtered {} paths)", filtered.len())
+    };
+
+    log::info!(
+        "{} Found {} files for the provided path patterns{}",
+        step.next(),
+        console::style(paths.len()).bold(),
+        filtered
+    );
 
     let cmd = get_command(&data)?;
-    let style = place_style_file(style_and_root)?;
+    log::info!(
+        "{} Found clang-format version {} using command {}",
+        step.next(),
+        console::style(cmd.get_version().unwrap()).bold(),
+        console::style(cmd.get_path().to_string_lossy()).bold(),
+    );
+
+    let style = place_style_file(style_and_root, &mut step)?;
 
     let _style = scopeguard::guard(style, |path| {
         // ensure we delete the temporary style file at return or panic
         if let Some(path) = path {
-            log::debug!("Deleting temporary file {}", path.to_string_lossy());
+            let str = format!("\nCleaning up temporary file {}\n", path.to_string_lossy());
+            let str = console::style(str).dim().italic();
+
+            log::info!("{}", str);
             let _ = fs::remove_file(path);
         }
     });
@@ -177,27 +228,63 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             .suggestion("Please try to decrease the number of jobs");
     }
 
-    log::info!("Formatting files...");
+    log::info!("{} Executing clang-format ...\n", step.next(),);
+
+    let pb = indicatif::ProgressBar::new(paths.len() as u64);
+    pb.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .template(if console::Term::stdout().size().1 > 80 {
+                "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len} {wide_msg}"
+            } else {
+                "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len}"
+            })
+            .progress_chars("=> "),
+    );
+
+    if log_pretty() {
+        pb.set_prefix("Running");
+    }
+
+    let green_bold = console::Style::new().green().bold();
+
     let paths: Vec<_> = paths.collect();
-    let _ = paths
-        .into_par_iter()
-        .try_for_each(|path| format_path(&cmd, path))?;
+    let _: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
+        if !log_pretty() {
+            log::info!("  + {}", path.to_string_lossy());
+        } else {
+            pb.inc(1);
+            pb.println(format!(
+                "{:>12} {}",
+                green_bold.apply_to("Formatting"),
+                path.to_string_lossy(),
+            ));
+        }
+        let _ = cmd.format(&path)
+            .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
+            .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
+        Ok(())
+    });
 
-    // for path in paths {
-    //     format_path(&cmd, path)?;
-    // }
+    if log_pretty() {
+        pb.finish();
+    } else {
+        log::info!("{} Done.", step.next(),);
+    }
 
-    log::info!("success :)");
     Ok(())
 }
 
-fn format_path<P>(cmd: &cmd::Runner, path: P) -> eyre::Result<()>
-where
-    P: AsRef<path::Path>,
-{
-    log::info!("  + {}", path.as_ref().to_string_lossy());
-    let _ = cmd.format(path.as_ref())
-        .wrap_err(format!("Failed to format {}", path.as_ref().to_string_lossy()))
-        .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
-    Ok(())
+fn log_pretty() -> bool {
+    !log::log_enabled!(log::Level::Debug) && log::log_enabled!(log::Level::Info)
 }
+
+// fn format_path<P>(cmd: &cmd::Runner, path: P) -> eyre::Result<()>
+// where
+//     P: AsRef<path::Path>,
+// {
+//     // log::info!("  + {}", path.as_ref().to_string_lossy());
+//     let _ = cmd.format(path.as_ref())
+//         .wrap_err(format!("Failed to format {}", path.as_ref().to_string_lossy()))
+//         .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
+//     Ok(())
+// }
