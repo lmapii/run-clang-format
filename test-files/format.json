@@ -2,7 +2,7 @@
   "paths": [
     "../../../../selbststaendig/ble-plant/dev/things/project/src/app_ui.h",
     "../../../../selbststaendig/ble-plant/dev/core/**/*.[ch]",
-    "../../../../selbststaendig/ble-plant/dev/things/project/**/*.[ch]"
+    "../../../../selbststaendig/ble-plant/dev/things/**/*.[ch]"
   ],
   "blacklist": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"],
   "styleFile_": "./other.clang-format",

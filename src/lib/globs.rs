@@ -66,7 +66,7 @@ pub fn build_glob_sets(
 pub fn match_paths<P>(
     candidates: Vec<globmatch::Matcher<P>>,
     blacklist: Option<Vec<globmatch::GlobSet>>,
-) -> Vec<path::PathBuf>
+) -> (Vec<path::PathBuf>, Vec<path::PathBuf>)
 where
     P: AsRef<path::Path>,
 {
@@ -127,5 +127,5 @@ where
         );
     }
 
-    paths
+    (paths, filtered)
 }

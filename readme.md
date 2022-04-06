@@ -59,7 +59,7 @@ The content of the configuration file is explained based on the following exampl
 - [ ] Don't simply exclude hidden files and folders?
 - [ ] Testing (limited unit-tests but regression tests for all scenarios)
 - [x] Concurrent execution of `clang-format` using a command line parameter `-j --jobs`
-- [ ] Maybe switch to [indicatif](https://docs.rs/indicatif/latest/indicatif/) for reporting progress
+- [x] Maybe switch to [indicatif](https://docs.rs/indicatif/latest/indicatif/) for reporting progress
 
 ## Use-Cases
 

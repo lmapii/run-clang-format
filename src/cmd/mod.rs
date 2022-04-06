@@ -7,6 +7,7 @@ use std::process;
 
 pub struct Runner {
     cmd: path::PathBuf,
+    version: Option<String>,
 }
 
 impl Runner {
@@ -15,7 +16,7 @@ impl Runner {
         P: AsRef<path::Path>,
     {
         let cmd = path::PathBuf::from(path.as_ref());
-        Runner { cmd }
+        Runner { cmd, version: None }
     }
 
     fn eval_status(status: process::ExitStatus) -> Result<(), io::Error> {
@@ -37,7 +38,15 @@ impl Runner {
         Ok(())
     }
 
-    pub fn get_version(&self) -> Result<String, io::Error> {
+    pub fn get_version(&self) -> Option<String> {
+        self.version.clone()
+    }
+
+    pub fn get_path(&self) -> path::PathBuf {
+        self.cmd.clone()
+    }
+
+    pub fn check(&mut self) -> Result<(), io::Error> {
         let cmd = process::Command::new(self.cmd.as_path())
             .arg("--version")
             .output()?;
@@ -59,7 +68,9 @@ impl Runner {
             .captures(&stdout)
             .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Failed to match version"))?;
 
-        Ok(format!("{}.{}.{}", &caps[1], &caps[2], &caps[3]))
+        let version = format!("{}.{}.{}", &caps[1], &caps[2], &caps[3]);
+        self.version = Some(version);
+        Ok(())
     }
 
     pub fn format<P>(&self, file: P) -> Result<(), io::Error>
@@ -93,6 +104,7 @@ impl Clone for Runner {
     fn clone(&self) -> Runner {
         Runner {
             cmd: path::PathBuf::from(self.cmd.as_path()),
+            version: self.version.clone(),
         }
     }
 }

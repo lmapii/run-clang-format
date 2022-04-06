@@ -35,13 +35,15 @@ pub fn setup(matches: &clap::ArgMatches) {
                 log::Level::Trace => ("<t>", s.set_bold(false).set_color(fmt::Color::Magenta)),
             };
 
-            // TODO: remove timestamp when adding indicatif
             let (target, tstamp) = match lvl {
-                l if l >= log::Level::Debug => (record.module_path(), f.timestamp_millis()),
-                _ => (None, f.timestamp_seconds()),
+                l if l >= log::Level::Debug => (record.module_path(), Some(f.timestamp_millis())),
+                _ => (None, None), // f.timestamp_seconds()),
             };
 
-            write!(f, "{} {}", s.value(tstamp), s.value(lvl_str))?;
+            if let Some(tstamp) = tstamp {
+                write!(f, "{} {}", s.value(tstamp), s.value(lvl_str))?;
+            }
+
             if let Some(target) = target {
                 write!(f, " {}", target)?;
             }
