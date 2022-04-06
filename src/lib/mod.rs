@@ -138,6 +138,8 @@ fn place_style_file(
 }
 
 pub fn run(data: cli::Data) -> eyre::Result<()> {
+    let start = std::time::Instant::now();
+
     log::info!("");
     let mut step = LogStep::new();
 
@@ -265,10 +267,17 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         Ok(())
     });
 
+    let duration = start.elapsed();
     if log_pretty() {
         pb.finish();
+
+        println!(
+            "{:>12} in {}",
+            green_bold.apply_to("Finished"),
+            indicatif::HumanDuration(duration)
+        );
     } else {
-        log::info!("{} Done.", step.next(),);
+        log::info!("{} Finished in {:#?}", step.next(), duration);
     }
 
     Ok(())
@@ -277,14 +286,3 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 fn log_pretty() -> bool {
     !log::log_enabled!(log::Level::Debug) && log::log_enabled!(log::Level::Info)
 }
-
-// fn format_path<P>(cmd: &cmd::Runner, path: P) -> eyre::Result<()>
-// where
-//     P: AsRef<path::Path>,
-// {
-//     // log::info!("  + {}", path.as_ref().to_string_lossy());
-//     let _ = cmd.format(path.as_ref())
-//         .wrap_err(format!("Failed to format {}", path.as_ref().to_string_lossy()))
-//         .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
-//     Ok(())
-// }
