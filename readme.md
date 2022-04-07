@@ -22,7 +22,7 @@ The content of the configuration file is explained based on the following exampl
     "../path/to/some/code/*.[ch]",
     "../../another/path/**/*.[ch]",
   ],
-  "blacklist": [
+  "filterPost": [
     "FreeRTOSConfig.h",
     "*.pb.[ch]",
     "sdk_config.h"
@@ -39,7 +39,7 @@ The content of the configuration file is explained based on the following exampl
 
 > *Remark:* Currently this tool skips all hidden files and folders (subject to change) to avoid walking through `.git` repositories.
 
-- **blacklist** contains a list of paths, filenames or globs that should be excluded from formatting. Notice that a leading `**/` wildcard is not required, but added automatically for each item in the blacklist.
+- **filterPost** contains a list of paths, filenames or globs that should be excluded from formatting. Notice that a leading `**/` wildcard is not required, but added automatically for each item in the filterPost.
 
 - **styleFile** is an optional parameter that specifies the path to the `.clang-format` file that should be used. See the below scenarios description for details.
 

@@ -15,8 +15,17 @@ use serde::Deserialize;
 pub struct JsonModel {
     /// List of paths as globs
     pub paths: Vec<String>,
-    /// List of globs to use for filtering (global blacklist)
-    pub blacklist: Option<Vec<String>>,
+    /// Optional list of globs used for efficiently pre-filtering paths.
+    /// In contracst to the filter_post, searching will completely skip all paths and its siblings
+    /// for any match with such a pattern. E.g., ".git" will skip all ".git" folders. If this field
+    /// is not present, the tool will skip all hidden paths and files by default. Set this entry to
+    /// an empty list to prevent any kind if pre-filtering.
+    pub filter_pre: Option<Vec<String>>,
+    /// Optional list of globs to use for post-filtering.
+    /// This filter will be applied for all paths _after_ they have been resolved. In contrast to
+    /// the pre-filter siblings of paths will not be filtered without the corresponding glob. E.g.,
+    /// ".git" will not filter any files, only ".git/**" would.
+    pub filter_post: Option<Vec<String>>,
     /// Optional path to a `.clang-format` style file (can be specified via --style)
     pub style_file: Option<path::PathBuf>,
     /// Optional path where the `.clang-format` file should be copied to while executing
@@ -194,10 +203,7 @@ impl JsonModel {
         serde_json::to_string_pretty(&schema).unwrap()
     }
 
-    fn load<P>(path: P) -> eyre::Result<JsonModel>
-    where
-        P: AsRef<path::Path>,
-    {
+    fn load(path: impl AsRef<path::Path>) -> eyre::Result<JsonModel> {
         let json_path = utils::file_with_ext(path.as_ref(), "json", true)?;
         let json_name = json_path.to_string_lossy();
 
@@ -210,7 +216,13 @@ impl JsonModel {
         "Please make sure that '{}' is a valid .json file and the contents match the required schema.",
         json_name))?;
 
-        json.root = path::PathBuf::from(json_path.canonicalize().unwrap().parent().unwrap());
+        json.root = json_path
+            .canonicalize()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+
         json.name = json_path.to_string_lossy().into();
         Ok(json)
     }

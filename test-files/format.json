@@ -4,7 +4,8 @@
     "../../../../selbststaendig/ble-plant/dev/core/**/*.[ch]",
     "../../../../selbststaendig/ble-plant/dev/things/**/*.[ch]"
   ],
-  "blacklist": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"],
+  "filterPre": [],
+  "filterPost": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"],
   "styleFile_": "./other.clang-format",
   "styleFile": "../../../../selbststaendig/ble-plant/toolchain/make/settings/.clang-format",
   "styleRoot": "../../../../selbststaendig/ble-plant/dev",
