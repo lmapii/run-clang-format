@@ -35,7 +35,7 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
             None => Ok(path::PathBuf::from(s_cfg.as_path()).canonicalize().unwrap()),
             // style defined in both, the .json configuration file and as CLI parameter
             Some(s_cli) => {
-                log::info!("Override detected:\nStyle file '{}' specified in '{}'\nis overridden by the command line parameter: '{}'",
+                log::debug!("Override detected:\nStyle file '{}' specified in '{}' is overridden by the command line parameter: '{}'\n",
                 s_cfg.to_string_lossy(), data.json.name, s_cli.as_path().to_string_lossy());
                 Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap())
             }
@@ -107,7 +107,7 @@ pub fn command(data: &cli::Data) -> path::PathBuf {
             None => path::PathBuf::from(cmd_cfg.as_path()),
             // cmd defined in both, the .json configuration file and as CLI parameter
             Some(cmd_cli) => {
-                log::info!("Override detected:\nCommand '{}' specified in '{}'\nis overridden by the command line parameter: '{}'",
+                log::debug!("Override detected:\nCommand '{}' specified in '{}' is overridden by the command line parameter: '{}'\n",
                 cmd_cfg.to_string_lossy(), data.json.name, cmd_cli.as_path().to_string_lossy());
                 path::PathBuf::from(cmd_cli.as_path())
             }

@@ -88,7 +88,7 @@ impl Runner {
             if stderr.len() != 0 {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("{}\n---\n{}", err, stderr),
+                    format!("{}\n---\n{}---", err, stderr),
                 ));
             }
             return Err(err);

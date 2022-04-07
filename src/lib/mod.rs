@@ -255,9 +255,9 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
     // pb.set_style(
     //     indicatif::ProgressStyle::with_template(if console::Term::stdout().size().1 > 80 {
-    //         "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len} {wide_msg}"
+    //         "{prefix:>12.cyan.bold} [{bar:26}] {pos}/{len} {wide_msg}"
     //     } else {
-    //         "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len}"
+    //         "{prefix:>12.cyan.bold} [{bar:26}] {pos}/{len}"
     //     })
     //     .unwrap()
     //     .progress_chars("=> "),
@@ -270,7 +270,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     let green_bold = console::Style::new().green().bold();
 
     let paths: Vec<_> = paths.collect();
-    let _: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
+    let result: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
         let print_path = if let Some(strip_path) = &strip_root {
             path.strip_prefix(strip_path).unwrap()
         } else {
@@ -292,6 +292,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
         Ok(())
     });
+    result?;
 
     let duration = start.elapsed();
     if log_pretty() {
