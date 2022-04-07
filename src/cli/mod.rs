@@ -1,15 +1,12 @@
+use std::{path, process};
+
 mod handlers;
 mod logging;
 pub mod utils;
 
-use std::path;
-use std::process;
-
 use clap::{arg, crate_authors, crate_description, crate_name, crate_version};
-
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
-
 use schemars::{schema_for, JsonSchema};
 use serde::Deserialize;
 
@@ -28,17 +25,24 @@ pub struct JsonModel {
     pub command: Option<path::PathBuf>,
 
     #[serde(skip)]
+    /// Parent directory of the Json file, used to resolve paths specified within
     pub root: path::PathBuf,
     #[serde(skip)]
+    /// Lossy Json filename
     pub name: String,
 }
 
 #[derive(Debug)]
 pub struct Data {
+    /// Json input data
     pub json: JsonModel,
+    /// Command-line override for the style file
     pub style: Option<path::PathBuf>,
+    /// Command-line override for the clang-format executable
     pub command: Option<path::PathBuf>,
-    pub jobs: u8,
+    /// Command-line parameter for the number of jobs to use for executing clang-format
+    /// If `None` then all available jobs should be used, else the specified number of jobs.
+    pub jobs: Option<u8>,
 }
 
 pub struct Builder {
@@ -60,23 +64,29 @@ impl Builder {
                     .allow_invalid_utf8(true),
             )
             .arg(
-                arg!(-s --style ... "Optional path to .clang-format style file. Overrides <JSON> configuration")
-                    .allow_invalid_utf8(true)
-                    .takes_value(true)
-                    .required(false),
+                arg!(-s --style ... "Optional path to .clang-format style file. \
+                                     Overrides <JSON> configuration")
+                .allow_invalid_utf8(true)
+                .takes_value(true)
+                .required(false),
             )
             .arg(
-                arg!(-c --command ... "Optional path to executable or clang-format command. Overrides <JSON> configuration, defaults to `clang-format`")
-                    // .default_value("clang-format")
-                    .allow_invalid_utf8(true)
-                    .takes_value(true)
-                    .required(false),
+                arg!(-c --command ... "Optional path to executable or clang-format command. \
+                                       Overrides <JSON> configuration, defaults to `clang-format`")
+                // .default_value("clang-format")
+                .allow_invalid_utf8(true)
+                .takes_value(true)
+                .required(false),
             )
             .arg(
-                arg!(-j --jobs ... "Optional parameter to define the maximum number of jobs to use. Default is 1, maximum value is 255")
-                    .default_value("1")
-                    .takes_value(true)
-                    .required(false),
+                arg!(-j --jobs ... "Optional parameter to define the number of jobs to use. \
+                                    If provided without value (e.g., '-j') all available logical \
+                                    cores are used. Maximum value is 255")
+                .default_value("1")
+                .takes_value(true)
+                .min_values(0)
+                .max_values(1)
+                .required(false),
             )
             .arg(
                 arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
@@ -130,18 +140,28 @@ impl Builder {
             Some(_) => Some(self.path_for_key("command", false)?),
         };
 
+        // cannot use "and" since it is not lazily evaluated, and cannot use "and_then" nicely
+        // since the question mark operator does not work in closures
         // let command = self
         //     .matches
         //     .value_of_os("command")
-        //     .and(Some(self.path_for_key("command", false)?));
+        //     .and_then(|_| Some(self.path_for_key("command", false)?));
 
-        let jobs: u8 = self
-            .matches
-            .value_of("jobs")
-            .unwrap()
-            .parse()
-            .map_err(|_| eyre!("Invalid parameter --jobs"))
-            .suggestion("Please provide a number in the range [0 .. 255]")?;
+        // unwrap is safe to call since jobs has a default value
+        let jobs = {
+            let mut val = self.matches.values_of("jobs").unwrap();
+            if val.len() == 0 {
+                None
+            } else {
+                let val: u8 = val
+                    .next()
+                    .unwrap()
+                    .parse()
+                    .map_err(|_| eyre!("Invalid parameter --jobs"))
+                    .suggestion("Please provide a number in the range [0 .. 255]")?;
+                Some(val)
+            }
+        };
 
         Ok(Data {
             json,

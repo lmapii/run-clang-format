@@ -1,5 +1,4 @@
-use std::fs;
-use std::path;
+use std::{fs, path};
 
 use color_eyre::{eyre::eyre, eyre::WrapErr};
 

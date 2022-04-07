@@ -1,5 +1,6 @@
-use color_eyre::owo_colors::OwoColorize;
 use std::fmt;
+
+use color_eyre::owo_colors::OwoColorize;
 pub struct PanicMessage;
 
 impl color_eyre::section::PanicMessage for PanicMessage {
