@@ -13,18 +13,22 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")] // removed: deny_unknown_fields
 pub struct JsonModel {
-    /// List of paths as globs
+    /// List of paths and/or globs.
+    /// This list may contain paths or shell-style globs to define the files that should be
+    /// filtered. Paths or globs that resolve to folders will be silently ignored. Any path
+    /// contained in this list must be specified relative to the configuration file.
     pub paths: Vec<String>,
     /// Optional list of globs used for efficiently pre-filtering paths.
-    /// In contracst to the filter_post, searching will completely skip all paths and its siblings
-    /// for any match with such a pattern. E.g., ".git" will skip all ".git" folders. If this field
-    /// is not present, the tool will skip all hidden paths and files by default. Set this entry to
-    /// an empty list to prevent any kind if pre-filtering.
+    /// In contrast to the post-filter, searching will completely skip all paths and its siblings
+    /// for any match with any pattern. E.g., [".git"] will skip all ".git" folders completely.
+    /// By default, i.e., if this field is not present in the configuration, the tool will skip all
+    /// hidden paths and files. Set this entry to an empty list to prevent any kind of
+    /// pre-filtering.
     pub filter_pre: Option<Vec<String>>,
     /// Optional list of globs to use for post-filtering.
     /// This filter will be applied for all paths _after_ they have been resolved. In contrast to
-    /// the pre-filter siblings of paths will not be filtered without the corresponding glob. E.g.,
-    /// ".git" will not filter any files, only ".git/**" would.
+    /// the pre-filter, siblings of paths will not be filtered without the corresponding glob. E.g.,
+    /// ".git" will not filter any files, only ".git/**" would. Notice that only
     pub filter_post: Option<Vec<String>>,
     /// Optional path to a `.clang-format` style file (can be specified via --style)
     pub style_file: Option<path::PathBuf>,

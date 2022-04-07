@@ -46,7 +46,7 @@ where
     wrap_result(build_matchers(globs, root), field, file)
 }
 
-pub fn build_matchers<P>(
+fn build_matchers<P>(
     globs: &[String],
     root: P,
 ) -> eyre::Result<Vec<globmatch::Matcher<path::PathBuf>>>
@@ -74,9 +74,7 @@ pub fn build_glob_set_from<'a>(
     wrap_result(build_glob_set(filter), field, file)
 }
 
-pub fn build_glob_set(
-    filter: &Option<Vec<String>>,
-) -> eyre::Result<Option<Vec<globmatch::GlobSet>>> {
+fn build_glob_set(filter: &Option<Vec<String>>) -> eyre::Result<Option<Vec<globmatch::GlobSet>>> {
     let filter = match filter {
         None => None,
         Some(paths) => Some(glob_sets(paths, !cfg!(windows))?),

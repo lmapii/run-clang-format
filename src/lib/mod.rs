@@ -242,6 +242,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             .progress_chars("=> "),
     );
 
+    // preparation for indicatif 0.17
     // pb.set_style(
     //     indicatif::ProgressStyle::with_template(if console::Term::stdout().size().1 > 80 {
     //         "{prefix:>12.cyan.bold} [{bar:26}] {pos}/{len} {wide_msg}"
