@@ -25,7 +25,7 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
     let style = match style_json {
         None => match &data.style {
             None => Err(eyre::eyre!(
-                "Style file must either be specified as parameter or within the configuration file"
+                "Style file must either be specified as command-line parameter or within the configuration file"
             )),
             // style defined as CLI parameter but not in the .json configuration file
             Some(s_cli) => Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap()),

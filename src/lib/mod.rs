@@ -1,10 +1,9 @@
 use std::{fs, path};
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use serde::Deserialize;
-
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use serde::Deserialize;
 
 use crate::cli;
 use crate::cmd;
@@ -31,9 +30,12 @@ impl LogStep {
     }
 
     fn next(&mut self) -> String {
+        // TODO: the actual number of steps could be determined by a macro?
         let str = format!(
             "{}",
-            console::style(format!("[ {:2} ]", self.step)).bold().dim()
+            console::style(format!("[ {:1}/5 ]", self.step))
+                .bold()
+                .dim()
         );
         self.step += 1;
         if log_pretty() {
@@ -205,12 +207,18 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         console::style(cmd.get_path().to_string_lossy()).bold(),
     );
 
+    let strip_root = if let Some((_, style_root)) = &style_and_root {
+        Some(path::PathBuf::from(style_root.as_path()))
+    } else {
+        None
+    };
+
     let style = place_style_file(style_and_root, &mut step)?;
 
     let _style = scopeguard::guard(style, |path| {
         // ensure we delete the temporary style file at return or panic
         if let Some(path) = path {
-            let str = format!("\nCleaning up temporary file {}\n", path.to_string_lossy());
+            let str = format!("Cleaning up temporary file {}\n", path.to_string_lossy());
             let str = console::style(str).dim().italic();
 
             log::info!("{}", str);
@@ -219,15 +227,17 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     });
 
     // configure rayon to use the specified number of threads (globally)
-    let jobs = if data.jobs == 0 { 1u8 } else { data.jobs };
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(jobs.into())
-        .build_global();
+    if let Some(jobs) = data.jobs {
+        let jobs = if jobs == 0 { 1u8 } else { jobs };
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs.into())
+            .build_global();
 
-    if let Err(err) = pool {
-        return Err(err)
-            .wrap_err(format!("Failed to create thread pool of size {}", jobs))
-            .suggestion("Please try to decrease the number of jobs");
+        if let Err(err) = pool {
+            return Err(err)
+                .wrap_err(format!("Failed to create thread pool of size {}", jobs))
+                .suggestion("Please try to decrease the number of jobs");
+        }
     }
 
     log::info!("{} Executing clang-format ...\n", step.next(),);
@@ -236,12 +246,22 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     pb.set_style(
         indicatif::ProgressStyle::default_bar()
             .template(if console::Term::stdout().size().1 > 80 {
-                "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len} {wide_msg}"
+                "{prefix:>12.cyan.bold} [{bar:26}] {pos}/{len} {wide_msg}"
             } else {
-                "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len}"
+                "{prefix:>12.cyan.bold} [{bar:26}] {pos}/{len}"
             })
             .progress_chars("=> "),
     );
+
+    // pb.set_style(
+    //     indicatif::ProgressStyle::with_template(if console::Term::stdout().size().1 > 80 {
+    //         "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len} {wide_msg}"
+    //     } else {
+    //         "{prefix:>12.cyan.bold} [{bar:57}] {pos}/{len}"
+    //     })
+    //     .unwrap()
+    //     .progress_chars("=> "),
+    // );
 
     if log_pretty() {
         pb.set_prefix("Running");
@@ -251,15 +271,21 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
     let paths: Vec<_> = paths.collect();
     let _: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
+        let print_path = if let Some(strip_path) = &strip_root {
+            path.strip_prefix(strip_path).unwrap()
+        } else {
+            &path
+        };
+
         if !log_pretty() {
             log::info!("  + {}", path.to_string_lossy());
         } else {
-            pb.inc(1);
             pb.println(format!(
                 "{:>12} {}",
                 green_bold.apply_to("Formatting"),
-                path.to_string_lossy(),
+                print_path.to_string_lossy(),
             ));
+            pb.inc(1);
         }
         let _ = cmd.format(&path)
             .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
@@ -280,6 +306,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         log::info!("{} Finished in {:#?}", step.next(), duration);
     }
 
+    log::info!(""); // just an empty newline
     Ok(())
 }
 

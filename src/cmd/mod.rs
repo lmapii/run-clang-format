@@ -1,9 +1,4 @@
-// https://stackoverflow.com/questions/21011330/how-do-i-invoke-a-system-command-and-capture-its-output
-// https://stackoverflow.com/questions/49218599/write-to-child-process-stdin-in-rust/49597789#49597789
-
-use std::io;
-use std::path;
-use std::process;
+use std::{io, path, process};
 
 pub struct Runner {
     cmd: path::PathBuf,
@@ -79,7 +74,9 @@ impl Runner {
     {
         // execute clang-format to edit in place, using style file
         let cmd = process::Command::new(self.cmd.as_path())
+            // .arg("--dry-run") TODO:
             .arg(file.as_ref().as_os_str())
+            .arg("--Werror")
             .arg("-fallback-style=none")
             .arg("-style=file")
             .arg("-i")

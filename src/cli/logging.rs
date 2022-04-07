@@ -1,5 +1,6 @@
-use env_logger::fmt;
 use std::io::Write;
+
+use env_logger::fmt;
 
 use super::handlers;
 
