@@ -97,9 +97,7 @@ jobs:
         shell: bash
         run: |
           staging="run_clang_format-${{ needs.create-release.outputs.app_version }}-${{ matrix.tuple.target }}"
-          mkdir -p "$staging"/{complete,doc}
-
-          cp {readme.md,LICENSE} "$staging/"
+          cp {readme.md,LICENSE,changelog.md} "$staging/"
 
           if [ "${{ matrix.tuple.os }}" = "windows-latest" ]; then
             cp "target/${{ matrix.tuple.target }}/release/run_clang_format.exe" "$staging/"

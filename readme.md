@@ -176,8 +176,8 @@ ProjectRoot
   ],
   "filterPre": ["**/.git", ".*"],
   "filterPost": ["FreeRTOS.h", "**/Hal*/**"],
-  "styleFile" : "./style.clang-format",
-  "styleRoot" : "../"
+  "styleFile": "./style.clang-format",
+  "styleRoot": "../"
 }
 ```
 
@@ -208,9 +208,9 @@ By default, the tool tries to use the command `clang-format` for formatting all 
   ],
   "filterPre": ["**/.git", ".*"],
   "filterPost": ["FreeRTOS.h", "**/Hal*/**"],
-  "styleFile" : "./style.clang-format",
-  "styleRoot" : "../",
-  "command" : "/path/to/clang-format"
+  "styleFile": "./style.clang-format",
+  "styleRoot": "../",
+  "command": "/path/to/clang-format"
 }
 ```
 
@@ -326,8 +326,8 @@ Without a wrapper script, with such a folder structure it would be necessary to 
   "paths": [
     "./Layers/**/*.[ch]",
   ],
-  "styleFile" : ".clang-format",
-  "styleRoot" : "../"
+  "styleFile": ".clang-format",
+  "styleRoot": "../"
 }
 ```
 
@@ -358,7 +358,7 @@ In this case, it is only necessary to specify the `paths` and the `styleRoot` in
   "paths": [
     "./**/*.[ch]",
   ],
-  "styleRoot" : "../"
+  "styleRoot": "../"
 }
 ```
 
@@ -387,8 +387,8 @@ When executing the tool with the following configuration, the files in `Some/Pat
   "paths": [
     "./Layers/**/*.[ch]",
   ],
-  "styleFile" : ".clang-format",
-  "styleRoot" : "../"
+  "styleFile": ".clang-format",
+  "styleRoot": "../"
 }
 ```
 
