@@ -2,7 +2,7 @@
 
 [![Build status](https://github.com/lmapii/run_clang_format/workflows/ci/badge.svg)](https://github.com/lmapii/run_clang_format/actions)
 
-CLI application for running an installed [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) and an existing `.clang-format` file on a set of files, specified using globs in a `.json` configuration file.
+CLI application for running [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) for an existing `.clang-format` file on a set of files, specified using globs in a `.json` configuration file.
 
 # Quickstart <!-- omit in toc -->
 
@@ -14,10 +14,12 @@ $ run_clang_format path/to/format.json
 
 Execute `run_clang_format --help` for more details, or `run_clang_format schema` for a complete schema description of the configuration file.
 
+<img src="https://github.com/lmapii/run_clang_format/blob/main/screenshots/demo.gif?raw=true">
+
 **Hints for the impatient user:**
 
 - Hidden paths and files are excluded unless the setting is changed [in the configuration file](#pre-filtering).
-- This tool assumes that `clang-format` is installed and in your path. This can be changed in your [configuration file](#specifying-the--clang-format-command) or specified as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
+- This tool assumes that `clang-format` is installed and in your path. The command can be specified in your [configuration file](#specifying-the--clang-format-command) or as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
 - Paths can be specified using [glob- or Unix-style path syntax](#glob--and-path-syntax).
 - Formatting is [executed in parallel](#speeding-up-the-execution) if the `-j` option is specified.
 
