@@ -5,7 +5,7 @@ name: release
 
 on:
   push:
-    Enable when testing release infrastructure on a branch.
+    # Enable when testing release infrastructure on a branch.
     branches:
     - feature/fix-release
     tags:
