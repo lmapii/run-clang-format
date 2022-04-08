@@ -12,13 +12,13 @@ The minimal command for executing this is the following:
 $ run_clang_format path/to/format.json
 ```
 
-Excecute `run_clang_format --help` for more details, or `run_clang_format schema` for a complete schema description of the configuration file.
+Execute `run_clang_format --help` for more details, or `run_clang_format schema` for a complete schema description of the configuration file.
 
 **Hints for the impatient user:**
 
 - Hidden paths and files are excluded unless the setting is changed [in the configuration file](#pre-filtering).
-- This tool assumes that `clang-format` is installed and in your path. This can be changed in your [configuration file](#specifying-the--clang-format-command) or specified as [command line parameter](#specifying-an-alternative-style-file-and-command).
-- Paths can be specified using [glob- or unix-style path syntax](#glob--and-path-syntax).
+- This tool assumes that `clang-format` is installed and in your path. This can be changed in your [configuration file](#specifying-the--clang-format-command) or specified as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
+- Paths can be specified using [glob- or Unix-style path syntax](#glob--and-path-syntax).
 - Formatting is [executed in parallel](#speeding-up-the-execution) if the `-j` option is specified.
 
 # Contents <!-- omit in toc -->
@@ -43,7 +43,7 @@ Excecute `run_clang_format --help` for more details, or `run_clang_format schema
 
 # The JSON configuration file
 
-The core of this CLI tool is a `.json` configuration file that specifies where all the files that should be formatted can be found. We'll be using a demo file and build it up step by step to explain the individual fields. The structure of the `.json` file is also documented in the `schema` sub-command (execute `run_clang_format schema`). To get started, we create an empty `.json` file that contains an empty object.
+The core of this CLI tool is a `.json` configuration file that specifies where all the files that should be formatted can be found. We'll be using a demo file, building it up step by step to explain the individual fields. The structure of the `.json` file is also documented in the `schema` sub-command (execute `run_clang_format schema`). To get started, we create an empty `.json` file that contains an empty object.
 
 ```json
 {
@@ -67,7 +67,7 @@ ProjectRoot
     └── <...>
 ```
 
-In the configuration file `format.json`, the paths to the two files would need to be specified as following:
+In the configuration file `format.json`, the paths to the two files would need to be specified as follows:
 
 ```json
 {
@@ -80,7 +80,7 @@ In the configuration file `format.json`, the paths to the two files would need t
 
 > **Remark:** This tool is made for software developers, thus any user should know that paths by themselves can become fairly complex: Take links, throw in character encodings, you get the idea. So anyone using smileys or other surreal things in their paths can contribute to this repository in case of problems, but not all scenarios can or will be tested.
 
-Clearly, noone wants to specify all paths manually, which is why this tool supports the use of unix-style **globs**. The following patterns will all resolve to the same paths, but are just provided for reference:
+Clearly, no one wants to specify all paths manually, which is why this tool supports the use of Unix-style **globs**. The following patterns will all resolve to the same paths, but are just provided for reference:
 
 ```json
 {
@@ -91,17 +91,17 @@ Clearly, noone wants to specify all paths manually, which is why this tool suppo
 }
 ```
 
-Assuming you have `clang-format` installed and a `.clang-format` file in one of the parent directories of your sources, e.g., in *ParentRoot*, this configuration would already be sufficient to execute:
+Assuming you have `clang-format` installed and a `.clang-format` file in one of the parent directories of your sources, e.g., in *ParentRoot*, this is all you need::
 
 ```
 $ run_clang_format path/to/format.json
 ```
 
-Notice that the working directory of the tool is irrelevant since all paths are specified relative to the provided `format.json`. For now this is all you need to know, we'll go into details about the supported scenarios later and will continue exploring the configuration options in the `.json` file.
+Notice that the working directory of the tool is irrelevant since all paths are specified relative to the provided `format.json`. For now, this is all you need to know, we'll go into details about the supported scenarios later and will continue exploring the configuration options in the `.json` file.
 
 ## Glob- and path syntax
 
-This tool uses the [globset](https://docs.rs/globset/latest/globset/index.html) rust crate to resolve globs. It therefore also relies on its [syntax](https://docs.rs/globset/latest/globset/index.html#syntax). We're borrowing the explanation here. When using globs, *standard unix-style glob syntax* is supported:
+This tool uses the [globset](https://docs.rs/globset/latest/globset/index.html) rust crate to resolve globs. It therefore also relies on its [syntax](https://docs.rs/globset/latest/globset/index.html#syntax). We're borrowing the explanation here. When using globs, *standard Unix-style glob syntax* is supported:
 
 - `?` matches any single character. It does not match path separators.
 - `*` matches zero or more characters but does not match across directory boundaries, i.e., it does not match a path separator. You have to use `**` for that:
@@ -109,17 +109,17 @@ This tool uses the [globset](https://docs.rs/globset/latest/globset/index.html) 
 - `{a,b}` matches `a` or `b` where `a` and `b` are arbitrary glob patterns. Nesting `{...}` is not supported.
 - `[ab]` matches `a` or `b` where `a` and `b` are *characters*. Use `[!ab]` to match any character *except* for `a` and `b`.
 - Metacharacters such as `*` and `?` can be escaped with the character class notation. e.g., `[*]` matches `*`.
-- A backslash `\` will escape all meta characters in a glob, but it must be specified as double backslash `\\` due to the fact that the glob is defined in a `.json` configuration file. If it precedes a non-meta character, then the slash is ignored..
+- A backslash `\` will escape all metacharacters in a glob, but it must be specified as double backslash `\\` due to the fact that the glob is defined in a `.json` configuration file. If it precedes a non-meta character, then the slash is ignored.
 
-On Windows paths all globs are case insensitive.
+For Windows paths, all globs are case insensitive.
 
-> **Remark:** Due to the caveat that backslashes must be escaped in `.json` files, and that a backslash in a glob behaves differently depending on whether or not the following character is a meta character, it is highly recommended to use a forward slash `/` as path separator on **any** platform. On Windows it is possible to use `\\` as path separators, but only if it does not precede a meta character.
+> **Remark:** Due to the caveat that backslashes must be escaped in `.json` files, and that a backslash in a glob behaves differently depending on whether or not the following character is a metacharacter, it is highly recommended to use a forward slash `/` as path separator on **any** platform. On Windows it is possible to use `\\` as path separators, but only if it does not precede a metacharacter.
 
 ## Pre-filtering
 
 By default, this tool will **exclude** all hidden files and folders from its search. This behaviour can be configured with the field **`filterPre`**. This field sets up a filter that is applied while recursively searching for files and therefore *before* matching files against the provided globs in the field `paths`. A typical pattern for such a filter is to exclude folders used by revision control systems, e.g., `.git` (or `.svn`) folders.
 
-For this field you can still use *globs*, but keep in mind that such a filter is applied on directories as well and thus if the filter matches then the directory will not even be searched, making it unnecessary to use, e.g., `**` after the name. The following example shows pre-filter configured to exclude all files within the `.git` folder, and also excludes all hidden files and directories.
+For this field, you can still use *globs*, but keep in mind that such a filter is applied on directories as well and thus if the filter matches then the directory will not even be searched, making it unnecessary to use, e.g., `**` after the name. The following example shows a pre-filter configured to exclude all files within the `.git` folder, and also excludes all hidden files and directories.
 
 ```json
 {
@@ -135,7 +135,7 @@ If no hidden folders should be skipped simply set this field to an empty list `[
 
 ## Post-filtering
 
-With the previous configuration file we matched all files and folders except for hidden files. Sometimes, however, it is useful to apply a filter *after* matching all paths, e.g., to exclude specific filenames that occurr multiple times, or to simplify the patterns in the field `paths`. This can be achieved with **`filterPost`**:
+With the previous configuration file, we matched all files and folders except for hidden files. Sometimes, however, it is useful to apply a filter *after* matching all paths, e.g., to exclude specific filenames that occur multiple times, or to simplify the patterns in the field `paths`. This can be achieved with **`filterPost`**:
 
 ```json
 {
@@ -185,7 +185,7 @@ The name *or the extension* of the `styleFile` must be `.clang-format`. This all
 
 When formatting the files, `run_clang_format` will:
 - Copy the provided style file to the specified root directory (renaming it to `.clang-format`, if necessary),
-- execute `clang-format` for all resolved paths
+- execute `clang-format` for all resolved paths,
 - and finally remove the temporary file.
 
 Only if you kill the execution of the tool (e.g., via CTRL+C) it won't be able to delete the temporary file.
@@ -210,7 +210,7 @@ By default, the tool tries to use the command `clang-format` for formatting all 
   "filterPost": ["FreeRTOS.h", "**/Hal*/**"],
   "styleFile" : "./style.clang-format",
   "styleRoot" : "../",
-  "command" : "/path/to/clang-format
+  "command" : "/path/to/clang-format"
 }
 ```
 
@@ -238,15 +238,15 @@ The verbosity is best configured by using the `-v` option:
 
 > The "pretty" output is only available for the `-v` log level, for any other log level the tool will switch to a debug-style output. This kind of output is not optimized for being redirected to a file since the progress bar will rewrite previous lines. Use the `-vv` debug option instead.
 
-* `-vv` switchs to the log level "debug", providing timestamps and a purely sequential output: No lines are being overwritten, each message is logged to a new line.
+* `-vv` switches to the log level "debug", providing timestamps and a purely sequential output: No lines are being overwritten, and each message is logged to a new line.
 
 * `-vvv` and above switch to the log level "trace", which can contain even more (probably irrelevant) messages. This is intended mainly for debugging the tool in case you find issues.
 
-To turn off any kind of output except for error messages, use the `--quiet` option. This overwrite the `--verbosity` level.
+To turn off any kind of output except for error messages, use the `--quiet` option. This overwrites the `--verbosity` level.
 
 ## Speeding up the execution
 
-By default, the tool will process each resolved path one by one. This can be rather slow for large projects. The command-line option `-j, --jobs` allows to specify the number of jobs that should be used for formatting.
+By default, the tool will process each resolved path one by one. This can be rather slow for large projects. The command-line option `-j, --jobs` allows specifying the number of jobs that should be used for formatting.
 
 * If specified without a value, e.g., `run_clang_format format.json -j`, then all available logical cores will be used for formatting.
 * If specified *with* a value, e.g., `run_clang_format format.json -j 3`, then the tool will only spawn as many jobs as specified.
@@ -255,9 +255,9 @@ By default, the tool will process each resolved path one by one. This can be rat
 
 ## Specifying an alternative style file and command
 
-The command line options `--style` and `--command` allow to specify a `.clang-format` file and the command to use for executing `clang-format`. Please refer to the corresponding section in the previous description of the `.json` configuration file (fields `styleFile` and `command`).
+The command-line options `--style` and `--command` allow specifying a `.clang-format` file and the command to use for executing `clang-format`. Please refer to the corresponding section in the previous description of the `.json` configuration file (fields `styleFile` and `command`).
 
-> **Remark:*** Specifying `--style` requires the field `styleRoot` to be configured.
+> **Remark:** Specifying `--style` requires the field `styleRoot` to be configured.
 
 # Use-cases
 
@@ -268,7 +268,7 @@ The following scenarios demonstrate the use-cases that have been considered duri
 
 ## A style file exists and is placed in the root folder
 
-Consider the following project, where the required `.clang-format` file is already placed in the root folder of the project. State of the art editors like [vscode](https://code.visualstudio.com) will allow developers to automatically format their files on save.
+Consider the following project, where the required `.clang-format` file is already placed in the root folder of the project. State-of-the-art editors like [vscode](https://code.visualstudio.com) will allow developers to automatically format their files on save.
 
 ```
 ProjectRoot
@@ -295,7 +295,7 @@ The following configuration file would allow to format all files in the project:
 }
 ```
 
-Here this tool may seem to be of limited use, since files will rarely be left unformatted. However, it helps to have a tool in place that formats all files on request, e.g., in the CI or on pull-requests.
+Here this tool may seem to be of limited use since files will rarely be left unformatted. However, it helps to have a tool in place that formats all files on request, e.g., in the CI or on pull requests.
 
 ## A style file exists but is placed stored outside the root folder
 
@@ -326,12 +326,12 @@ Without a wrapper script, with such a folder structure it would be necessary to 
   "paths": [
     "./Layers/**/*.[ch]",
   ],
-  "styleFile" = ".clang-format",
-  "styleRoot" = "../"
+  "styleFile" : ".clang-format",
+  "styleRoot" : "../"
 }
 ```
 
-> **Remark:** Since tool checks whether a `.clang-format` file *with different content* already exists in `styleRoot`, any user manually copying the `.clang-format` file to the root folder (e.g., to work with an editor supporting `clang-format`) would be notified if their style file is outdated (the contents no longer match).
+> **Remark:** Since the tool checks whether a `.clang-format` file *with different content* already exists in `styleRoot`, any user manually copying the `.clang-format` file to the root folder (e.g., to work with an editor supporting `clang-format`) would be notified if their style file is outdated (the contents no longer match).
 
 ## The style file is selected during runtime
 
@@ -351,14 +351,14 @@ ProjectRoot
     └── <...>
 ```
 
-In this case it is only necessary to specify the `paths` and the `styleRoot` in your configuration file:
+In this case, it is only necessary to specify the `paths` and the `styleRoot` in your configuration file:
 
 ```json
 {
   "paths": [
     "./**/*.[ch]",
   ],
-  "styleRoot" = "../"
+  "styleRoot" : "../"
 }
 ```
 
@@ -366,7 +366,7 @@ In this case it is only necessary to specify the `paths` and the `styleRoot` in 
 
 ## Multiple `.clang-format` files
 
-In case other `.clang-format` files exist in different folders, `.clang-format` will always use the first file that it finds when going backwards from the file to format. E.g., for `header.c` the file `ProjectRoot/Some/Layer/.clang-format` will be used.
+In case other `.clang-format` files exist in different folders, `.clang-format` will always use the first file that it finds when going back from the file to format. E.g., for `header.c` the file `ProjectRoot/Some/Layer/.clang-format` will be used.
 
 ```
 ProjectRoot
@@ -387,8 +387,8 @@ When executing the tool with the following configuration, the files in `Some/Pat
   "paths": [
     "./Layers/**/*.[ch]",
   ],
-  "styleFile" = ".clang-format",
-  "styleRoot" = "../"
+  "styleFile" : ".clang-format",
+  "styleRoot" : "../"
 }
 ```
 
