@@ -32,6 +32,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
   - [Post-filtering](#post-filtering)
   - [Specifying a `.clang-format` style file and a root directory](#specifying-a-clang-format-style-file-and-a-root-directory)
   - [Specifying the  `clang-format` command](#specifying-the--clang-format-command)
+    - [TODO: so far this must be an absolute path](#todo-so-far-this-must-be-an-absolute-path)
 - [Command-line Parameters](#command-line-parameters)
   - [Verbosity and `--quiet`](#verbosity-and---quiet)
   - [Speeding up the execution](#speeding-up-the-execution)
@@ -219,6 +220,8 @@ By default, the tool tries to use the command `clang-format` for formatting all 
 Similar to the `styleFile` field, this configuration will be replaced by the **`--command`** command-line parameter, if provided.
 
 > **Notice:** It is important that your style file is compatible with the version of `clang-format` that you are using. This is the main reason why `clang-format` is not installed with this tool.
+
+### TODO: so far this must be an absolute path
 
 # Command-line Parameters
 

@@ -113,4 +113,11 @@ pub fn command(data: &cli::Data) -> path::PathBuf {
             }
         },
     }
+
+    // TODO:
+    // check if path is absolute and exists -> use absolute
+    // check if path is relative and exists -> use relative
+    // check if path is relative, add json prefix -> use relative
+    //     --> but only for a path provided by the .json file
+    // else: either the specified path does not exist or it is not a command
 }
