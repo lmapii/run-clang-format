@@ -95,6 +95,7 @@ pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, p
 }
 
 pub fn command(data: &cli::Data) -> path::PathBuf {
+    // TODO: allow both relative and absolute paths?
     match &data.json.command {
         None => match &data.command {
             // use default value if not specified in configuration file nor as parameter

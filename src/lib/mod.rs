@@ -178,6 +178,8 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         );
     }
 
+    // TODO: update globmatch to allow absolute paths in the globs
+    // for those the prefix is simply ignored
     let candidates =
         globs::build_matchers_from(&data.json.paths, &data.json.root, "paths", &data.json.name)?;
     let filter_pre =
@@ -263,6 +265,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     let result: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
         let print_path = match &strip_root {
             None => &path,
+            // TODO: need to add a try if we allow absolute paths
             Some(strip) => path.strip_prefix(strip).unwrap()
         };
 

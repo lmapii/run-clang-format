@@ -220,6 +220,8 @@ Similar to the `styleFile` field, this configuration will be replaced by the **`
 
 > **Notice:** It is important that your style file is compatible with the version of `clang-format` that you are using. This is the main reason why `clang-format` is not installed with this tool.
 
+TODO: document that this must either be a full, absolute path - or a command name
+
 # Command-line Parameters
 
 All available command-line parameters should be sufficiently described by the tool itself, when providing any of the options `-h, --help, help`. Also, the JSON schema of the configuration file can be displayed by using the `schema` subcommand. This JSON schema also contains descriptions for each of the options described above:

@@ -101,6 +101,10 @@ impl Builder {
                 .max_values(1)
                 .required(false),
             )
+            // TODO: add --dry-run and --check
+            // --dry-run -Werror
+            // for --dry-run and -Werror it would be good to receive a list instead of an early abort
+            // TODO: dry-run is only available for clang-format >= 10
             .arg(
                 arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
                     .global(true)

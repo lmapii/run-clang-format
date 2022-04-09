@@ -11,6 +11,11 @@ impl Runner {
         P: AsRef<path::Path>,
     {
         let cmd = path::PathBuf::from(path.as_ref());
+
+        // TODO: try
+        // check if path is absolute and exists -> use absolute
+        // check if path is relative and exists -> use relative
+        // else: either the specified path does not exist or it is not a command
         Runner { cmd, version: None }
     }
 
