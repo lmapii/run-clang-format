@@ -135,22 +135,31 @@ impl Builder {
         }
 
         let json_path = self.path_for_key("JSON", true)?;
-        let json = JsonModel::load(&json_path).wrap_err("Invalid parameter <JSON>")?;
+        let json = JsonModel::load(&json_path).wrap_err("Invalid parameter for <JSON>")?;
 
         let style = match self.matches.is_present("style") {
             false => None,
             true => {
-                let style_path = self.path_for_key("style", true)?;
+                let style_path = self
+                    .path_for_key("style", true)
+                    .wrap_err("Invalid parameter for option --style")?;
                 let path = utils::file_with_name_or_ext(&style_path, ".clang-format")
-                    .wrap_err("Invalid parameter --style")?;
+                    .wrap_err("Invalid parameter for option --style")?;
                 Some(path)
             }
         };
 
-        // we're not yet validating the command here, since the same procedure is applied for the file
         let command = match self.matches.value_of_os("command") {
             None => None,
-            Some(_) => Some(self.path_for_key("command", false)?),
+            Some(_) => Some(
+                utils::filename_or_exists(self.path_for_key("command", false)?, None)
+                    .wrap_err("Invalid parameter for option --command")
+                    .suggestion(
+                        "Please make sure that '--command' is either a valid absolute path, \
+                            a valid path relative to the current working directory \
+                            or a known application",
+                    )?,
+            ),
         };
 
         // cannot use "and" since it is not lazily evaluated, and cannot use "and_then" nicely
@@ -170,7 +179,7 @@ impl Builder {
                     .next()
                     .unwrap()
                     .parse()
-                    .map_err(|_| eyre!("Invalid parameter --jobs"))
+                    .map_err(|_| eyre!("Invalid parameter for option --jobs"))
                     .suggestion("Please provide a number in the range [0 .. 255]")?;
                 Some(val)
             }
