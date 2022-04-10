@@ -1,4 +1,8 @@
 
+# 1.1.0
+
+- Support for relative paths for the field 'command'.
+
 # 1.0.0
 
 - Breaking change in the `JSON` schema: The field `blacklist` has been renamed to `filterPost`.

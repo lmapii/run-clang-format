@@ -1,6 +1,6 @@
 [package]
 name = "run_clang_format"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Martin Lampacher <lmapii@gmail.com>"]
 description = """
 Cross platform CLI wrapper for executing clang-format based paths or globs specified
