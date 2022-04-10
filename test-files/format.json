@@ -9,6 +9,6 @@
   "styleFile_": "./other.clang-format",
   "styleFile": "../../../../selbststaendig/ble-plant/toolchain/make/settings/.clang-format",
   "styleRoot": "../../../../selbststaendig/ble-plant/dev",
-  "command_": "/Users/martin/Downloads/clang+llvm-14.0.0-x86_64-apple-darwin/bin/clang-format",
-  "command": "/Users/martin/Downloads/clang+llvm-10.0.1-x86_64-apple-darwin/bin/clang-format"
+  "command_": "/Users/martin/Downloads/clang+llvm-10.0.1-x86_64-apple-darwin/bin/clang-format",
+  "command": "../../../../../Downloads/clang+llvm-10.0.1-x86_64-apple-darwin/bin/clang-format"
 }

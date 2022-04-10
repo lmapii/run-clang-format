@@ -216,7 +216,9 @@ By default, the tool tries to use the command `clang-format` for formatting all 
 }
 ```
 
-Similar to the `styleFile` field, this configuration will be replaced by the **`--command`** command-line parameter, if provided.
+In contrast to the patterns in the field 'paths', the command can be specified as a path relative to the configuration file, as an absolute path, or as a simple executable name.
+
+Similar to the `styleFile` field, this configuration will be replaced by the **`--command`** command-line parameter, if provided. When specifying a relative path specified as command line parameter the path is resolved relative to the current *working directory*.
 
 > **Notice:** It is important that your style file is compatible with the version of `clang-format` that you are using. This is the main reason why `clang-format` is not installed with this tool.
 

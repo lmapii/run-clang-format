@@ -25,7 +25,8 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
     let style = match style_json {
         None => match &data.style {
             None => Err(eyre::eyre!(
-                "Style file must either be specified as command-line parameter or within the configuration file"
+                "Style file must either be specified as \
+                command-line parameter or within the configuration file"
             )),
             // style defined as CLI parameter but not in the .json configuration file
             Some(s_cli) => Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap()),
@@ -35,8 +36,14 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
             None => Ok(path::PathBuf::from(s_cfg.as_path()).canonicalize().unwrap()),
             // style defined in both, the .json configuration file and as CLI parameter
             Some(s_cli) => {
-                log::debug!("Override detected:\nStyle file '{}' specified in '{}' is overridden by the command line parameter: '{}'\n",
-                s_cfg.to_string_lossy(), data.json.name, s_cli.as_path().to_string_lossy());
+                log::debug!(
+                    "Override detected:\nStyle file '{}' \
+                        specified in '{}' is overridden by the \
+                        command line parameter: '{}'\n",
+                    s_cfg.to_string_lossy(),
+                    data.json.name,
+                    s_cli.as_path().to_string_lossy()
+                );
                 Ok(path::PathBuf::from(s_cli.as_path()).canonicalize().unwrap())
             }
         },
@@ -60,7 +67,10 @@ pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, p
             Some(
                 utils::dir_or_err(path.as_path())
                     .wrap_err("Invalid configuration for 'styleRoot'")
-                    .suggestion("Please make sure that 'styleRoot' is a valid directory and check the access permissions")?
+                    .suggestion(
+                        "Please make sure that 'styleRoot' is a valid \
+                            directory and check the access permissions",
+                    )?
                     .canonicalize()
                     .unwrap(),
             )
@@ -73,10 +83,14 @@ pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, p
             // and assume that there is a .clang-format file in the root folder of all files
             None => Ok(None),
             // unsupported scenario: root specified but missing style file
-            Some(_) =>
-                Err(style_err.wrap_err(
-                        "A valid style file must be specified for configurations with the field 'styleRoot'",
-                    )).suggestion("Specify the style file using the command line parameter or the field 'styleRoot' within the configuration file.")
+            Some(_) => Err(style_err.wrap_err(
+                "A valid style file must be specified for \
+                        configurations with the field 'styleRoot'",
+            ))
+            .suggestion(
+                "Specify the style file using the command line \
+                    parameter or the field 'styleRoot' within the configuration file.",
+            ),
         }
     } else {
         match style_root {
@@ -94,8 +108,10 @@ pub fn style_and_root(data: &cli::Data) -> eyre::Result<Option<(path::PathBuf, p
     }
 }
 
-pub fn command(data: &cli::Data) -> path::PathBuf {
-    match &data.json.command {
+pub fn command(data: &cli::Data) -> eyre::Result<path::PathBuf> {
+    let mut from_json = false;
+
+    let cmd = match &data.json.command {
         None => match &data.command {
             // use default value if not specified in configuration file nor as parameter
             None => path::PathBuf::from("clang-format"),
@@ -104,13 +120,106 @@ pub fn command(data: &cli::Data) -> path::PathBuf {
         },
         Some(cmd_cfg) => match &data.command {
             // cmd defined in the .json configuration file but not as CLI parameter
-            None => path::PathBuf::from(cmd_cfg.as_path()),
+            None => {
+                from_json = true;
+                path::PathBuf::from(cmd_cfg.as_path())
+            }
             // cmd defined in both, the .json configuration file and as CLI parameter
             Some(cmd_cli) => {
-                log::debug!("Override detected:\nCommand '{}' specified in '{}' is overridden by the command line parameter: '{}'\n",
-                cmd_cfg.to_string_lossy(), data.json.name, cmd_cli.as_path().to_string_lossy());
+                log::debug!(
+                    "Override detected:\nCommand '{}' \
+                        specified in '{}' is overridden by the command line parameter: '{}'\n",
+                    cmd_cfg.to_string_lossy(),
+                    data.json.name,
+                    cmd_cli.as_path().to_string_lossy()
+                );
                 path::PathBuf::from(cmd_cli.as_path())
             }
         },
+    };
+
+    if from_json {
+        return utils::filename_or_exists(cmd.as_path(), Some(data.json.root.as_path()))
+            .wrap_err("Invalid configuration for field 'command'")
+            .suggestion(
+                "When using relative paths for the field 'command' please \
+                    make sure to provide a valid path relative to the \
+                    <JSON> root directory.",
+            );
+    }
+    Ok(cmd)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_command_path() {
+        #[derive(Debug)]
+        struct TestPaths {
+            path: PathBuf,
+            is_absolute: bool,
+            is_relative: bool,
+            is_file: bool,
+        }
+
+        let tests = vec![
+            TestPaths {
+                path: "some/path/to/clang-format".into(),
+                is_absolute: false,
+                is_relative: true,
+                is_file: false,
+            },
+            TestPaths {
+                path: "/some/path/to/clang-format".into(),
+                is_absolute: true,
+                is_relative: false,
+                is_file: false,
+            },
+            TestPaths {
+                path: "clang-format".into(),
+                is_absolute: false,
+                is_relative: true,
+                is_file: true,
+            },
+            TestPaths {
+                path: "clang-format.exe".into(),
+                is_absolute: false,
+                is_relative: true,
+                is_file: true,
+            },
+            TestPaths {
+                path: "some/path/..".into(),
+                is_absolute: false,
+                is_relative: true,
+                is_file: false,
+            },
+        ];
+
+        fn test_paths(paths: &[TestPaths]) {
+            for path in paths.iter() {
+                println!("checking {:?}", path);
+                println!("  components{}", path.path.components().count());
+                assert_eq!(path.is_absolute, path.path.is_absolute());
+                assert_eq!(path.is_relative, path.path.is_relative());
+
+                // one way to check that the path passed for "command" is a pure file or
+                // executable name is to count the components
+                assert_eq!(path.is_file, path.path.components().count() == 1);
+
+                // another way is to take the filename and compare it to the original path. if the
+                // (complete) original path is the same, it is just a filename.
+                let is_file = path
+                    .path
+                    .file_name()
+                    .and_then(|file_name| (path.path.as_os_str() == file_name).then(|| file_name))
+                    .is_some();
+
+                assert_eq!(path.is_file, is_file);
+            }
+        }
+
+        test_paths(&tests);
     }
 }

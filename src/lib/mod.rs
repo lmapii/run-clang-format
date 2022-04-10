@@ -50,12 +50,12 @@ impl LogStep {
 }
 
 fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
-    let cmd_path = resolve::command(data);
+    let cmd_path = resolve::command(data)?;
     let mut cmd = cmd::Runner::new(&cmd_path);
 
     cmd.check()
         .wrap_err(format!(
-            "Failed to execute '{}'",
+            "Failed to execute the specified command '{}'",
             cmd_path.to_string_lossy()
         ))
         .suggestion(format!(

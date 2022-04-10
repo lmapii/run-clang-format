@@ -131,6 +131,51 @@ where
     }
 }
 
+pub fn filename_or_exists<P>(path: P, root: Option<P>) -> eyre::Result<path::PathBuf>
+where
+    P: AsRef<path::Path>,
+{
+    if path.as_ref().is_absolute() && !path.as_ref().exists() {
+        return Err(eyre::eyre!(format!(
+            "'{}' does not exist",
+            path.as_ref().to_string_lossy()
+        )));
+    }
+
+    // this is one way to find out of if the specified path is only a file- or directory name
+    // for paths that are provided as pure filenames, no checks are performed since they can be
+    // part of search paths (e.g., for command names)
+    let is_file = path
+        .as_ref()
+        .file_name()
+        .and_then(|file_name| (path.as_ref().as_os_str() == file_name).then(|| true))
+        .is_some();
+
+    if is_file {
+        return Ok(path.as_ref().to_path_buf());
+    }
+
+    if path.as_ref().is_relative() {
+        let full_path = match root {
+            None => path.as_ref().to_path_buf(),
+            Some(root) => {
+                let mut full_path = root.as_ref().to_path_buf();
+                full_path.push(path.as_ref());
+                full_path
+            }
+        };
+        if !full_path.exists() {
+            return Err(eyre::eyre!(format!(
+                "'{}' does not exist",
+                path.as_ref().to_string_lossy()
+            )));
+        }
+        return Ok(full_path);
+    }
+
+    Ok(path.as_ref().to_path_buf())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
