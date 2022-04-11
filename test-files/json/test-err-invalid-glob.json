@@ -1,0 +1,4 @@
+{
+  "description": "error in glob",
+  "paths": ["../c-demo/**/*.[c"]
+}

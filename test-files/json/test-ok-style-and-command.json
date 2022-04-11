@@ -1,0 +1,7 @@
+{
+  "description": "all provided fields are valid",
+  "paths": [],
+  "styleFile": "../clang-format/.clang-format",
+  "styleRoot": "../c-demo",
+  "command": "../../artifacts/clang/clang-format"
+}

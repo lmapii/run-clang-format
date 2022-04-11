@@ -87,11 +87,43 @@ fn invoke_json_style() {
 }
 
 #[test]
+fn invoke_json_command() {
+    let combinations = vec![
+        // path to command does not exist
+        ("test-files/json/test-err-invalid-command.json", false),
+        // path to command exists, but it is not an executable
+        ("test-files/json/test-err-invalid-command-file.json", false),
+        // command is not a path and an invalid executable name
+        ("test-files/json/test-err-invalid-command-name.json", false),
+        // valid command has been provided as path
+        ("test-files/json/test-ok-style-and-command.json", true),
+    ];
+
+    for test in combinations.into_iter() {
+        println!("checking {}", test.0);
+        let json = crate_root_rel(test.0);
+        // using command WITHOUT path
+        run_cmd_and_assert(&mut cmd().arg(json.as_os_str()), test.1);
+    }
+
+    // test that also a valid executable name can be provided as command field (requires $PATH)
+    let json = crate_root_rel("test-files/json/test-ok-style-and-command-name.json");
+    run_cmd_and_assert(&mut cmd_with_path().arg(json.as_os_str()), true);
+}
+
+#[test]
+fn invoke_json_glob() {
+    // test that an invalid glob leads to an error
+    let json = crate_root_rel("test-files/json/test-err-invalid-glob.json");
+    run_cmd_and_assert(&mut cmd_with_path().arg(json.as_os_str()), false);
+}
+
+#[test]
 fn invoke_arg_style() {
     // given: a valid .json configuration file
     let json = crate_root_rel("test-files/json/test-ok-style.json");
 
-    // paired with an invalid --style parameter, leads to an error (would override .json)
+    // paired with an invalid --style parameter, leads to an error (overrides valid .json)
     run_cmd_and_assert(
         &mut cmd_with_path()
             .arg(json.as_os_str())
@@ -119,4 +151,77 @@ fn invoke_arg_style() {
     );
 }
 
-// TODO: test that --quiet really does not output anything
+#[test]
+fn invoke_arg_command() {
+    // given: a valid .json configuration file
+    let json = crate_root_rel("test-files/json/test-ok-style-and-command.json");
+
+    // paired with an invalid --command parameter, leads to an error (overrides valid .json)
+    run_cmd_and_assert(
+        &mut cmd().arg(json.as_os_str()).arg("--command i/do/not/exist"),
+        false,
+    );
+
+    // paired with an valid path as --command parameter, success
+    run_cmd_and_assert(
+        &mut cmd().arg(json.as_os_str()).arg(format!(
+            "--command={}",
+            crate_root_rel("artifacts/clang/clang-format").to_string_lossy()
+        )),
+        true,
+    );
+
+    // paired with an valid COMMAND as --command parameter, success
+    run_cmd_and_assert(
+        &mut cmd_with_path()
+            .arg(json.as_os_str())
+            .arg(format!("--command=clang-format")),
+        true,
+    );
+
+    let json = crate_root_rel("test-files/json/test-err-invalid-command.json");
+    // a valid --command parameter even overrides an invalid json configuration file
+    run_cmd_and_assert(
+        &mut cmd_with_path()
+            .arg(json.as_os_str())
+            .arg(format!("--command=clang-format")),
+        true,
+    );
+}
+
+#[test]
+fn invoke_quiet() {
+    fn assert_quiet(cmd: &mut Command, expect_quiet: bool) {
+        let output = cmd.output().unwrap();
+
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let stderr = String::from_utf8(output.stderr).unwrap();
+
+        println!("status: {}", output.status);
+        println!("{}", stdout);
+        println!("{}", stderr);
+
+        if expect_quiet {
+            assert_eq!(0, stdout.len());
+            assert_eq!(0, stderr.len());
+        } else {
+            assert_ne!(0, stderr.len());
+        }
+    }
+
+    assert_quiet(
+        &mut cmd_with_path()
+            .arg(crate_root_rel("test-files/json/test-ok-style.json").as_os_str())
+            .arg("-vvvv")
+            .arg("--quiet"),
+        true,
+    );
+
+    assert_quiet(
+        &mut cmd_with_path()
+            .arg(crate_root_rel("test-files/json/test-err-empty.json").as_os_str())
+            .arg("-vvvv")
+            .arg("--quiet"),
+        false,
+    );
+}

@@ -1,0 +1,7 @@
+{
+  "description": "command is not a clang-format executable, all other fields are valid",
+  "paths": [],
+  "styleFile": "../clang-format/.clang-format",
+  "styleRoot": "../c-demo",
+  "command": "../clang-format/some.file"
+}
