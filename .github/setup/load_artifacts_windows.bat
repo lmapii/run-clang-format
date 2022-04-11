@@ -7,4 +7,4 @@ dir "%SYSTEMDRIVE%\Program Files\LLVM\bin"
 mkdir "artifacts\clang\clang-format"
 copy "%SYSTEMDRIVE%\Program Files\LLVM\bin\clang-format.exe" "artifacts\clang\clang-format"
 
-artifacts\clang\clang-format.exe --version
+@REM artifacts\clang\clang-format.exe --version

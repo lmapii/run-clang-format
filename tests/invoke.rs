@@ -51,6 +51,7 @@ fn run_cmd_and_assert(cmd: &mut Command, should_pass: bool) {
 }
 
 #[test]
+// #[cfg(not(windows))]
 fn invoke_json_and_bin() {
     // empty .json file is not accepted
     let json = crate_root_rel("test-files/json/test-err-empty.json");
@@ -58,7 +59,7 @@ fn invoke_json_and_bin() {
 
     let json = crate_root_rel("test-files/json/test-ok-empty-paths.json");
     // .json file with empty paths is accepted, but clang-format is not in the $PATH
-    if !cfg!(linux) {
+    if cfg!(linux) {
         // TODO: cmd() does not seem to properly clear the path in linux
         cmd().arg(json.as_os_str()).assert().failure();
     }
@@ -91,6 +92,7 @@ fn invoke_json_style() {
 }
 
 #[test]
+// #[cfg(not(windows))]
 fn invoke_json_command() {
     let combinations = vec![
         // path to command does not exist
@@ -156,6 +158,7 @@ fn invoke_arg_style() {
 }
 
 #[test]
+// #[cfg(not(windows))]
 fn invoke_arg_command() {
     // given: a valid .json configuration file
     let json = crate_root_rel("test-files/json/test-ok-style-and-command.json");
