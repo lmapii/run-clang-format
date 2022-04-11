@@ -11,7 +11,7 @@ sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
   wget
 
-ver="10.0.1"
+ver="14.0.0"
 pkg="clang+llvm-$ver-x86_64-linux-gnu-ubuntu-18.04"
 
 wget -O clang-$ver.tgz "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$pkg.tar.xz"
