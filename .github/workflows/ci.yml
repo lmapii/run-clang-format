@@ -113,10 +113,10 @@ jobs:
       - name: Install packages (Ubuntu)
         if: matrix.os == 'ubuntu-18.04'
         run: |
-          ls -la
-          ls -la setup
+          ls -la .github
+          ls -la .github/setup
           pwd
-          setup/ubuntu-install-packages
+          .github/setup/ubuntu-install-packages.sh
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
