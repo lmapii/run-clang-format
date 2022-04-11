@@ -10,6 +10,7 @@ use clap::crate_name;
 fn cmd() -> Command {
     let mut cmd = Command::cargo_bin(crate_name!()).unwrap();
     cmd.env_clear();
+    cmd.env_remove("PATH");
     cmd
 }
 

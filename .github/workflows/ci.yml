@@ -102,7 +102,7 @@ jobs:
       matrix:
         os:
           - ubuntu-18.04
-          # - macos-latest
+          - macos-latest
           # - windows-latest
         toolchain:
           - stable
@@ -110,10 +110,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install packages (Ubuntu)
+      - name: Install packages (ubuntu)
         if: matrix.os == 'ubuntu-18.04'
         run: |
           .github/setup/load_artifacts_ubuntu.sh
+
+      - name: Install packages (macos)
+        if: matrix.os == 'macos-latest'
+        run: |
+          .github/setup/load_artifacts_macos.sh
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
