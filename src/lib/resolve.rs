@@ -159,6 +159,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
+    #[cfg(not(windows))]
     fn test_command_path() {
         #[derive(Debug)]
         struct TestPaths {

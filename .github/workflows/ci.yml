@@ -133,7 +133,7 @@ jobs:
           override: true
 
       - name: Test
-        run: cargo test --verbose
+        run: cargo test --verbose --no-fail-fast
 
 
   # tests:
