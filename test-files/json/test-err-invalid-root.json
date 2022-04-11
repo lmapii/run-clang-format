@@ -1,0 +1,6 @@
+{
+  "description": "invalid, since 'styleRoot' is not a valid path",
+  "paths": [],
+  "styleFile": "../clang-format/.clang-format",
+  "styleRoot": "../some/invalid/path"
+}

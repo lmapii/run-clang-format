@@ -1,0 +1,6 @@
+{
+  "description": "valid, since 'paths' is defined, 'styleFile' and 'styleRoot' exist",
+  "paths": [],
+  "styleFile": "../clang-format/.clang-format",
+  "styleRoot": "../c-demo"
+}

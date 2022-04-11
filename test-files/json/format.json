@@ -1,0 +1,8 @@
+{
+  "paths": ["../c-demo/pkg_?/**/*.[ch]", "../c-demo/{project,subfolder}/**/*.[ch]", "../c-demo/**/*.[ch]"],
+  "filterPre": [".*"],
+  "filterPost": ["FreeRTOSConfig.h", "*.pb.[ch]", "sdk_config.h", "ble/**"],
+  "styleFile": "../clang-format/named.clang-format",
+  "styleRoot": "../c-demo",
+  "command": "../../artifacts/clang/clang-format"
+}

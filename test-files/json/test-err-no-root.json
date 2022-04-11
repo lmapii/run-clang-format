@@ -1,0 +1,5 @@
+{
+  "description": "invalid, since 'paths' is defined and 'styleFile' exists, but 'styleRoot' has not been specified",
+  "paths": [],
+  "styleFile": "../clang-format/.clang-format"
+}

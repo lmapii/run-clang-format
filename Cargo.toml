@@ -6,8 +6,8 @@ description = """
 Cross platform CLI wrapper for executing clang-format based paths or globs specified
 in a JSON input file.
 """
-# documentation = "https://docs.rs/globmatch"
-# homepage = "https://github.com/lmapii/globmatch"
+# documentation = "https://docs.rs/run_clang_format"
+homepage = "https://github.com/lmapii/run_clang_format"
 repository = "https://github.com/lmapii/run_clang_format"
 keywords = ["clang-format", "glob", "search"]
 
@@ -34,3 +34,4 @@ console = { version = "0.15", default-features = false, features = ["ansi-parsin
 
 [dev-dependencies]
 doc-comment = "0.3"
+assert_cmd = "2.0.4"
