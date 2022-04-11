@@ -109,16 +109,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
       - name: Install packages (Ubuntu)
         if: matrix.os == 'ubuntu-18.04'
         run: |
+          ls -la
+          ls -la setup
+          pwd
           setup/ubuntu-install-packages
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
           override: true
+
       - name: Test
         uses: actions-rs/toolchain@v1
         with:
