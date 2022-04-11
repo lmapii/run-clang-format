@@ -107,12 +107,12 @@ jobs:
         toolchain:
           - stable
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - name: Install packages (Ubuntu)
         if: matrix.os == 'ubuntu-18.04'
         run: |
-          setup/load_artifacts_ubuntu.sh
-      - name: Checkout repository
-        uses: actions/checkout@v2
+          .github/setup/load_artifacts_ubuntu.sh
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
