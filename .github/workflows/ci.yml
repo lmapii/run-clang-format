@@ -103,7 +103,7 @@ jobs:
         os:
           - ubuntu-18.04
           - macos-latest
-          # - windows-latest
+          - windows-latest
         toolchain:
           - stable
     steps:
@@ -119,6 +119,11 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           .github/setup/load_artifacts_macos.sh
+
+      - name: Install packages (windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          .github/setup/load_artifacts_windows.bat
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
