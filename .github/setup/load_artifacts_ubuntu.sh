@@ -16,7 +16,10 @@ pkg="clang+llvm-$ver-x86_64-linux-gnu-ubuntu-18.04"
 
 wget -O clang-$ver.tgz "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$pkg.tar.xz"
 mkdir -p artifacts/clang
-tar -xvf clang-$ver.tgz $pkg/bin/clang-format
+tar -xf clang-$ver.tgz $pkg/bin/clang-format
 mv $pkg/bin/clang-format artifacts/clang
 rm -rf $pkg
 rm clang-$ver.tgz
+
+ls -la artifacts/clang
+artifacts/clang/clang-format --version
