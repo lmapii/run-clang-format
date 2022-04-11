@@ -116,7 +116,7 @@ jobs:
           ls -la .github
           ls -la .github/setup
           pwd
-          .github/setup/ubuntu-install-packages.sh
+          .github/setup/load_artifacts_ubuntu.sh
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
