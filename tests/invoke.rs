@@ -2,7 +2,7 @@
 // https://github.com/mattgathu/duma/blob/master/tests/
 // https://crates.io/crates/assert_cmd
 
-use std::path;
+use std::{path, thread, time};
 
 use assert_cmd::Command;
 use clap::crate_name;
@@ -47,6 +47,11 @@ fn run_cmd_and_assert(cmd: &mut Command, should_pass: bool) {
         println!("status: {}", output.status);
         println!("{}", String::from_utf8(output.stdout).unwrap());
         println!("{}", String::from_utf8(output.stderr).unwrap());
+    }
+
+    if cfg!(windows) {
+        // on windows deleting files (the temporary clang-format file) can take some time
+        thread::sleep(time::Duration::from_millis(500));
     }
 
     assert_eq!(output.status.success(), should_pass);

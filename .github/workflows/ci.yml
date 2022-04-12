@@ -133,7 +133,8 @@ jobs:
           override: true
 
       - name: Test
-        run: cargo test --verbose --no-fail-fast # -- --test-threads 1
+        # using only one test thread to avoid race conditions on temporary files
+        run: cargo test --verbose --no-fail-fast -- --test-threads 1
 
 
   # tests:
