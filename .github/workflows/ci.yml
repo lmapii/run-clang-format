@@ -95,6 +95,7 @@ jobs:
 
   tests:
     name: Test ${{ matrix.os }}
+    needs: [compile]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
