@@ -46,6 +46,12 @@ pub struct JsonModel {
 }
 
 #[derive(Debug)]
+pub enum Command {
+    Format,
+    Check,
+}
+
+#[derive(Debug)]
 pub struct Data {
     /// Json input data
     pub json: JsonModel,
@@ -56,6 +62,8 @@ pub struct Data {
     /// Command-line parameter for the number of jobs to use for executing clang-format
     /// If `None` then all available jobs should be used, else the specified number of jobs.
     pub jobs: Option<u8>,
+    /// Command to execute.
+    pub cmd: Command,
 }
 
 pub struct Builder {
@@ -106,6 +114,11 @@ impl Builder {
                     .global(true)
                     .multiple_values(false),
             )
+            .arg(
+                arg!(--check "Run in check mode instead of formatting. Use -vv to \
+                              log the output of clang-format for each mismatch. \
+                              Requires clang-format 10 or higher."),
+            )
             .arg(arg!(-q --quiet "Suppress all output except for errors; overrides -v"))
             .subcommand_negates_reqs(true)
             .subcommand(
@@ -125,11 +138,6 @@ impl Builder {
 
     pub fn parse(self) -> eyre::Result<Data> {
         if self.matches.subcommand_matches("schema").is_some() {
-            // let _ = Builder::app().print_help();
-            // println!(
-            //     "\n\nThe following schema is used for <JSON>:\n{}",
-            //     JsonModel::schema(),
-            // );
             println!("{}", JsonModel::schema(),);
             process::exit(0);
         }
@@ -185,11 +193,18 @@ impl Builder {
             }
         };
 
+        let cmd = if self.matches.is_present("check") {
+            Command::Check
+        } else {
+            Command::Format
+        };
+
         Ok(Data {
             json,
             style,
             command,
             jobs,
+            cmd,
         })
     }
 

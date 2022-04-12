@@ -203,6 +203,17 @@ fn invoke_arg_command() {
 }
 
 #[test]
+fn invoke_arg_check() {
+    // given: configuration file where --check should fail
+    let json = crate_root_rel("test-files/json/test-err-format.json");
+    run_cmd_and_assert(cmd_with_path().arg(json.as_os_str()).arg("--check"), false);
+
+    // given: configuration file where --check should fail
+    let json = crate_root_rel("test-files/json/test-ok-format.json");
+    run_cmd_and_assert(cmd_with_path().arg(json.as_os_str()).arg("--check"), true);
+}
+
+#[test]
 fn invoke_quiet() {
     fn assert_quiet(cmd: &mut Command, expect_quiet: bool) {
         let output = cmd.output().unwrap();

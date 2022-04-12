@@ -53,7 +53,7 @@ fn get_command(data: &cli::Data) -> eyre::Result<cmd::Runner> {
     let cmd_path = resolve::command(data)?;
     let mut cmd = cmd::Runner::new(&cmd_path);
 
-    cmd.check()
+    cmd.validate()
         .wrap_err(format!(
             "Failed to execute the specified command '{}'",
             cmd_path.to_string_lossy()
@@ -202,11 +202,15 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     );
 
     let cmd = get_command(&data)?;
+    let cmd_path = match cmd.get_path().canonicalize() {
+        Ok(path) => path,
+        Err(_) => cmd.get_path(),
+    };
     log::info!(
         "{} Found clang-format version {} using command {}",
         step.next(),
         console::style(cmd.get_version().unwrap()).bold(),
-        console::style(cmd.get_path().to_string_lossy()).bold(),
+        console::style(cmd_path.to_string_lossy()).bold(),
     );
 
     let strip_root = if let Some((_, style_root)) = &style_and_root {
@@ -256,32 +260,77 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     if log_pretty() {
         pb.set_prefix("Running");
     }
-
-    let green_bold = console::Style::new().green().bold();
-
     let paths: Vec<_> = paths.collect();
-    let result: eyre::Result<()> = paths.into_par_iter().try_for_each(|path| {
-        let print_path = match &strip_root {
-            None => &path,
-            Some(strip) => path.strip_prefix(strip).unwrap()
-        };
 
-        if log_pretty() {
-            pb.println(format!(
-                "{:>12} {}",
-                green_bold.apply_to("Formatting"),
-                print_path.to_string_lossy(),
-            ));
-            pb.inc(1);
-        } else {
-            log::info!("  + {}", path.to_string_lossy());
+    let result: eyre::Result<()> = match data.cmd {
+        cli::Command::Format => paths.into_par_iter().try_for_each(|path| {
+            log_step(
+                "Formatting",
+                path.as_path(),
+                &strip_root,
+                &pb,
+                console::Style::new().green().bold(),
+            );
+
+            let _ = cmd
+                .run_format(&path)
+                .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
+                .suggestion(
+                    "Please make sure that your style file matches \
+                    the version of clang-format and that you have the \
+                    necessary permissions to modify all files",
+                )?;
+            Ok(())
+        }),
+        cli::Command::Check => {
+            if let Err(err) = cmd.supports_check_or_err() {
+                return Err(err).wrap_err("Check mode is not supported").suggestion(
+                    "Please use a version of clang-format that supports the --dry-run option",
+                );
+            }
+
+            let failures: Vec<_> = paths
+                .into_par_iter()
+                .map(|path| {
+                    let result = match cmd.run_check(&path) {
+                        Ok(_) => None,
+                        Err(err) => {
+                            let print_path = match &strip_root {
+                                None => path.clone(),
+                                Some(strip) => path.strip_prefix(strip).unwrap().to_path_buf(),
+                            };
+                            Some((print_path, format!("{}", err)))
+                        }
+                    };
+                    let (prefix, style) = match result {
+                        Some(_) => ("Error", console::Style::new().red().bold()),
+                        None => ("Match", console::Style::new().green().bold()),
+                    };
+                    log_step(prefix, path.as_path(), &strip_root, &pb, style);
+                    if let Some(err) = &result {
+                        if !log_pretty() {
+                            log::error!("{}", err.1);
+                        }
+                    }
+                    result
+                })
+                .flatten()
+                .collect();
+
+            if !failures.is_empty() {
+                Err(eyre::eyre!(format!(
+                    "Format check failed for the following files:\n{}",
+                    failures
+                        .into_iter()
+                        .map(|result| format!("{}", result.0.to_string_lossy()))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                )))
+            } else {
+                Ok(())
+            }
         }
-
-        let _ = cmd.format(&path)
-            .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
-            .suggestion("Please make sure that your style file matches the version of clang-format and that you have the necessary permissions to modify all files")?;
-        Ok(())
-    });
+    };
     result?;
 
     let duration = start.elapsed();
@@ -290,7 +339,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
         println!(
             "{:>12} in {}",
-            green_bold.apply_to("Finished"),
+            console::Style::new().green().bold().apply_to("Finished"),
             indicatif::HumanDuration(duration)
         );
     } else {
@@ -299,4 +348,29 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
     log::info!(" "); // just an empty newline
     Ok(())
+}
+
+fn log_step(
+    prefix: &str,
+    path: &path::Path,
+    strip_path: &Option<path::PathBuf>,
+    progress: &indicatif::ProgressBar,
+    style: console::Style,
+) {
+    // let style = console::Style::new().green().bold();
+    let print_path = match strip_path {
+        None => path,
+        Some(strip) => path.strip_prefix(strip).unwrap(),
+    };
+
+    if log_pretty() {
+        progress.println(format!(
+            "{:>12} {}",
+            style.apply_to(prefix),
+            print_path.to_string_lossy(),
+        ));
+        progress.inc(1);
+    } else {
+        log::info!("  + {}", path.to_string_lossy());
+    }
 }

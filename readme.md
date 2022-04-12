@@ -22,6 +22,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
 - This tool assumes that `clang-format` is installed and in your path. The command can be specified in your [configuration file](#specifying-the-clang-format-command) or as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
 - Paths can be specified using [glob- or Unix-style path syntax](#glob--and-path-syntax).
 - Formatting is [executed in parallel](#speeding-up-the-execution) if the `-j` option is specified.
+- To check the formatting of files without changing the content this tool can be executed in [check mode](#checking-if-the-format-matches-the-provided-style).
 
 # Contents <!-- omit in toc -->
 
@@ -36,6 +37,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
   - [Verbosity and `--quiet`](#verbosity-and---quiet)
   - [Speeding up the execution](#speeding-up-the-execution)
   - [Specifying an alternative style file and command](#specifying-an-alternative-style-file-and-command)
+  - [Checking if the format matches the provided style](#checking-if-the-format-matches-the-provided-style)
 - [Use-cases](#use-cases)
   - [A style file exists and is placed in the root folder](#a-style-file-exists-and-is-placed-in-the-root-folder)
   - [A style file exists but is placed stored outside the root folder](#a-style-file-exists-but-is-placed-stored-outside-the-root-folder)
@@ -93,7 +95,7 @@ Clearly, no one wants to specify all paths manually, which is why this tool supp
 }
 ```
 
-Assuming you have `clang-format` installed and a `.clang-format` file in one of the parent directories of your sources, e.g., in *ParentRoot*, this is all you need::
+Assuming you have `clang-format` installed and a `.clang-format` file in one of the parent directories of your sources, e.g., in *ProjectRoot*, this is all you need::
 
 ```
 $ run_clang_format path/to/format.json
@@ -264,6 +266,12 @@ By default, the tool will process each resolved path one by one. This can be rat
 The command-line options `--style` and `--command` allow specifying a `.clang-format` file and the command to use for executing `clang-format`. Please refer to the description of the `.json` configuration file for the [fields `styleFile`](#specifying-a-clang-format-style-file-and-a-root-directory) [and `command`](#specifying-the-clang-format-command).
 
 > **Remark:** Specifying `--style` requires the field `styleRoot` to be configured.
+
+## Checking if the format matches the provided style
+
+When specifying the command-line options `--check` this tool will execute in check mode, i.e., instead of trying to format all files resolved from the given field `paths` the tool will execute `clang-format` with the parameters `--dry-run -WError` to check whether the style matches the style as specified in the `.clang-format` style file.
+
+> **Remark:** Specifying `--check` requires `clang-format` version 10 or higher since the `--dry-run` flag has been introduced only with this version of `clang-format`. This tool will check the version of the specified command and produce an error if the option is not supported.
 
 # Use-cases
 

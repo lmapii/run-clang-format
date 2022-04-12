@@ -1,4 +1,8 @@
 
+# 1.3.0
+
+- Added command-line parameter `--check`, supported for `clang-format` version 10 or higher. This runs `clang-format --dry-run -WError` on all resolved paths to check whether the formatting matches the specified file.
+
 # 1.2.0
 
 - The tool is now subject to some very basic integration tests, but executed on Windows, macos and Linux (Ubuntu).
