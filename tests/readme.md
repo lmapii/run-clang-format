@@ -1,9 +1,10 @@
 
 # Dependencies
 
-The integration tests assume the following:
+When trying to execute the integration tests locally, please check the following:
 
 * `clang-format` is a valid command in your `$PATH`
-* The same or a valid `clang-format` executable with version `10.0.1` exists as `<repo-root>/artifacts/clang/clang-format`
+* The same or a valid `clang-format` executable exists as `<repo-root>/artifacts/clang/clang-format[.exe]`
+* Please check the [ci setup](../.github/setup/) for the `clang-format` version that is currently used for testing.
 
-This is required to test most of the possible combinations and/or valid fields. The CI integrates this workflow in the test steps.
+This setup is required to test most of the possible combinations and/or valid fields. The CI integrates this workflow in the test steps.

@@ -185,10 +185,7 @@ where
     P: AsRef<path::Path>,
 {
     let path_buf = path.as_ref().to_path_buf();
-    let root_buf = match root {
-        None => None,
-        Some(p) => Some(p.as_ref().to_path_buf()),
-    };
+    let root_buf = root.map(|p| p.as_ref().to_path_buf());
 
     let mut checks = vec![filename_or_exists(path_buf, root_buf.clone())];
 
@@ -207,7 +204,7 @@ where
         return Ok(cmd.as_ref().unwrap().as_path().to_path_buf());
     }
 
-    return Err(checks.remove(0).unwrap_err());
+    Err(checks.remove(0).unwrap_err())
 }
 
 pub fn executable_or_exists<P>(path: P, root: Option<P>) -> eyre::Result<path::PathBuf>

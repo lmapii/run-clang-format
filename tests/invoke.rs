@@ -66,7 +66,9 @@ fn invoke_json_and_bin() {
     let json = crate_root_rel("test-files/json/test-ok-empty-paths.json");
     // .json file with empty paths is accepted, but clang-format is not in the $PATH
     if cfg!(linux) {
-        // TODO: cmd() does not seem to properly clear the env/path in linux ??
+        // TODO: cmd() does not seem to properly clear the env/path in linux ?
+        // this might be related since we're invoking a command within a command
+        // so on linux the original PATH might apply for each invocation within this command
         cmd().arg(json.as_os_str()).assert().failure();
     }
     // as soon as we add the path to clang-format to $PATH the execution is successful
@@ -93,7 +95,7 @@ fn invoke_json_style() {
     for test in combinations.into_iter() {
         println!("checking {}", test.0);
         let json = crate_root_rel(test.0);
-        run_cmd_and_assert(&mut cmd_with_path().arg(json.as_os_str()), test.1);
+        run_cmd_and_assert(cmd_with_path().arg(json.as_os_str()), test.1);
     }
 }
 
@@ -114,19 +116,19 @@ fn invoke_json_command() {
         println!("checking {}", test.0);
         let json = crate_root_rel(test.0);
         // using command WITHOUT path
-        run_cmd_and_assert(&mut cmd().arg(json.as_os_str()), test.1);
+        run_cmd_and_assert(cmd().arg(json.as_os_str()), test.1);
     }
 
     // test that also a valid executable name can be provided as command field (requires $PATH)
     let json = crate_root_rel("test-files/json/test-ok-style-and-command-name.json");
-    run_cmd_and_assert(&mut cmd_with_path().arg(json.as_os_str()), true);
+    run_cmd_and_assert(cmd_with_path().arg(json.as_os_str()), true);
 }
 
 #[test]
 fn invoke_json_glob() {
     // test that an invalid glob leads to an error
     let json = crate_root_rel("test-files/json/test-err-invalid-glob.json");
-    run_cmd_and_assert(&mut cmd_with_path().arg(json.as_os_str()), false);
+    run_cmd_and_assert(cmd_with_path().arg(json.as_os_str()), false);
 }
 
 #[test]
@@ -136,7 +138,7 @@ fn invoke_arg_style() {
 
     // paired with an invalid --style parameter, leads to an error (overrides valid .json)
     run_cmd_and_assert(
-        &mut cmd_with_path()
+        cmd_with_path()
             .arg(json.as_os_str())
             .arg("--style=i/do/not/exist.clang-format"),
         false,
@@ -144,7 +146,7 @@ fn invoke_arg_style() {
 
     // paired with an valid --style parameter, success
     run_cmd_and_assert(
-        &mut cmd_with_path().arg(json.as_os_str()).arg(format!(
+        cmd_with_path().arg(json.as_os_str()).arg(format!(
             "--style={}",
             crate_root_rel("test-files/clang-format/named.clang-format").to_string_lossy()
         )),
@@ -154,7 +156,7 @@ fn invoke_arg_style() {
     let json = crate_root_rel("test-files/json/test-err-invalid-style-file.json");
     // a valid --style parameter even overrides an invalid json configuration file
     run_cmd_and_assert(
-        &mut cmd_with_path().arg(json.as_os_str()).arg(format!(
+        cmd_with_path().arg(json.as_os_str()).arg(format!(
             "--style={}",
             crate_root_rel("test-files/clang-format/named.clang-format").to_string_lossy()
         )),
@@ -169,13 +171,13 @@ fn invoke_arg_command() {
 
     // paired with an invalid --command parameter, leads to an error (overrides valid .json)
     run_cmd_and_assert(
-        &mut cmd().arg(json.as_os_str()).arg("--command=i/do/not/exist"),
+        cmd().arg(json.as_os_str()).arg("--command=i/do/not/exist"),
         false,
     );
 
     // paired with an valid path as --command parameter, success
     run_cmd_and_assert(
-        &mut cmd().arg(json.as_os_str()).arg(format!(
+        cmd().arg(json.as_os_str()).arg(format!(
             "--command={}",
             crate_root_rel("artifacts/clang/clang-format").to_string_lossy()
         )),
@@ -184,18 +186,18 @@ fn invoke_arg_command() {
 
     // paired with an valid COMMAND as --command parameter, success
     run_cmd_and_assert(
-        &mut cmd_with_path()
+        cmd_with_path()
             .arg(json.as_os_str())
-            .arg(format!("--command=clang-format")),
+            .arg("--command=clang-format"),
         true,
     );
 
     let json = crate_root_rel("test-files/json/test-err-invalid-command.json");
     // a valid --command parameter even overrides an invalid json configuration file
     run_cmd_and_assert(
-        &mut cmd_with_path()
+        cmd_with_path()
             .arg(json.as_os_str())
-            .arg(format!("--command=clang-format")),
+            .arg("--command=clang-format"),
         true,
     );
 }
@@ -221,7 +223,7 @@ fn invoke_quiet() {
     }
 
     assert_quiet(
-        &mut cmd_with_path()
+        cmd_with_path()
             .arg(crate_root_rel("test-files/json/test-ok-style.json").as_os_str())
             .arg("-vvvv")
             .arg("--quiet"),
@@ -229,7 +231,7 @@ fn invoke_quiet() {
     );
 
     assert_quiet(
-        &mut cmd_with_path()
+        cmd_with_path()
             .arg(crate_root_rel("test-files/json/test-err-empty.json").as_os_str())
             .arg("-vvvv")
             .arg("--quiet"),
