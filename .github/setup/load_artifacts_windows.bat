@@ -4,7 +4,7 @@
 choco install llvm --version 14.0.0 -y
 dir "%SYSTEMDRIVE%\Program Files\LLVM\bin"
 
-mkdir "artifacts\clang\clang-format"
-copy "%SYSTEMDRIVE%\Program Files\LLVM\bin\clang-format.exe" "artifacts\clang\clang-format"
+mkdir "artifacts\clang"
+copy "%SYSTEMDRIVE%\Program Files\LLVM\bin\clang-format.exe" "artifacts\clang"
 
 @REM artifacts\clang\clang-format.exe --version
