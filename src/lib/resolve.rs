@@ -143,7 +143,7 @@ pub fn command(data: &cli::Data) -> eyre::Result<path::PathBuf> {
     };
 
     if from_json {
-        return utils::filename_or_exists(cmd.as_path(), Some(data.json.root.as_path()))
+        return utils::executable_or_exists(cmd.as_path(), Some(data.json.root.as_path()))
             .wrap_err("Invalid configuration for field 'command'")
             .suggestion(
                 "When using relative paths for the field 'command' please \

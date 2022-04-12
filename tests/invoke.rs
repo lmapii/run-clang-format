@@ -43,15 +43,16 @@ fn invoke_subs() {
 fn run_cmd_and_assert(cmd: &mut Command, should_pass: bool) {
     let output = cmd.output().unwrap();
 
-    println!("status: {}", output.status);
-    println!("{}", String::from_utf8(output.stdout).unwrap());
-    println!("{}", String::from_utf8(output.stderr).unwrap());
+    if output.status.success() != should_pass {
+        println!("status: {}", output.status);
+        println!("{}", String::from_utf8(output.stdout).unwrap());
+        println!("{}", String::from_utf8(output.stderr).unwrap());
+    }
 
     assert_eq!(output.status.success(), should_pass);
 }
 
 #[test]
-// #[cfg(not(windows))]
 fn invoke_json_and_bin() {
     // empty .json file is not accepted
     let json = crate_root_rel("test-files/json/test-err-empty.json");
@@ -92,7 +93,6 @@ fn invoke_json_style() {
 }
 
 #[test]
-// #[cfg(not(windows))]
 fn invoke_json_command() {
     let combinations = vec![
         // path to command does not exist
@@ -133,7 +133,7 @@ fn invoke_arg_style() {
     run_cmd_and_assert(
         &mut cmd_with_path()
             .arg(json.as_os_str())
-            .arg("--style i/do/not/exist.clang-format"),
+            .arg("--style=i/do/not/exist.clang-format"),
         false,
     );
 
@@ -158,14 +158,13 @@ fn invoke_arg_style() {
 }
 
 #[test]
-// #[cfg(not(windows))]
 fn invoke_arg_command() {
     // given: a valid .json configuration file
     let json = crate_root_rel("test-files/json/test-ok-style-and-command.json");
 
     // paired with an invalid --command parameter, leads to an error (overrides valid .json)
     run_cmd_and_assert(
-        &mut cmd().arg(json.as_os_str()).arg("--command i/do/not/exist"),
+        &mut cmd().arg(json.as_os_str()).arg("--command=i/do/not/exist"),
         false,
     );
 
