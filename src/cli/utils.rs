@@ -176,6 +176,45 @@ where
     Ok(path.as_ref().to_path_buf())
 }
 
+pub fn filename_or_exists_with_ext<P>(
+    path: P,
+    root: Option<P>,
+    ext: Option<&str>,
+) -> eyre::Result<path::PathBuf>
+where
+    P: AsRef<path::Path>,
+{
+    let path_buf = path.as_ref().to_path_buf();
+    let root_buf = root.map(|p| p.as_ref().to_path_buf());
+
+    let mut checks = vec![filename_or_exists(path_buf, root_buf.clone())];
+
+    // allow to omit the extension, e.g., .exe for Windows
+    if let Some(ext) = ext {
+        let mut try_ext = path.as_ref().to_path_buf();
+        try_ext.set_extension(ext);
+
+        checks.push(filename_or_exists(try_ext, root_buf));
+    }
+
+    // println!("commands to check: {:?}", checks);
+
+    let has_path = checks.iter().find(|result| result.is_ok());
+    if let Some(cmd) = has_path {
+        return Ok(cmd.as_ref().unwrap().as_path().to_path_buf());
+    }
+
+    Err(checks.remove(0).unwrap_err())
+}
+
+pub fn executable_or_exists<P>(path: P, root: Option<P>) -> eyre::Result<path::PathBuf>
+where
+    P: AsRef<path::Path>,
+{
+    let ext = if cfg!(windows) { Some("exe") } else { None };
+    filename_or_exists_with_ext(path, root, ext)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

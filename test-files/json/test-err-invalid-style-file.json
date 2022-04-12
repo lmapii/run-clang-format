@@ -1,0 +1,6 @@
+{
+  "description": "the path to the style file exists, but it is not a .clang-format file",
+  "paths": [],
+  "styleFile": "../clang-format/some.file",
+  "styleRoot": "../c-demo"
+}

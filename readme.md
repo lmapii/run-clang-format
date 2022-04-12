@@ -19,7 +19,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
 **Hints for the impatient user:**
 
 - Hidden paths and files are excluded unless the setting is changed [in the configuration file](#pre-filtering).
-- This tool assumes that `clang-format` is installed and in your path. The command can be specified in your [configuration file](#specifying-the--clang-format-command) or as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
+- This tool assumes that `clang-format` is installed and in your path. The command can be specified in your [configuration file](#specifying-the-clang-format-command) or as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
 - Paths can be specified using [glob- or Unix-style path syntax](#glob--and-path-syntax).
 - Formatting is [executed in parallel](#speeding-up-the-execution) if the `-j` option is specified.
 
@@ -31,7 +31,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
   - [Pre-filtering](#pre-filtering)
   - [Post-filtering](#post-filtering)
   - [Specifying a `.clang-format` style file and a root directory](#specifying-a-clang-format-style-file-and-a-root-directory)
-  - [Specifying the  `clang-format` command](#specifying-the--clang-format-command)
+  - [Specifying the `clang-format` command](#specifying-the-clang-format-command)
 - [Command-line Parameters](#command-line-parameters)
   - [Verbosity and `--quiet`](#verbosity-and---quiet)
   - [Speeding up the execution](#speeding-up-the-execution)
@@ -198,7 +198,7 @@ Only if you kill the execution of the tool (e.g., via CTRL+C) it won't be able t
 
 The `styleFile` configuration will be replaced by the **`--style`** command-line parameter, if provided.
 
-## Specifying the  `clang-format` command
+## Specifying the `clang-format` command
 
 By default, the tool tries to use the command `clang-format` for formatting all resolved paths. If this command is not in your path, or if you use a different name for your executable (e.g., `clang-format-10`), then you need to specify the command or full path to the executable either via the command-line parameter `--command` or using the `command` field in your configuration file:
 
@@ -221,6 +221,8 @@ In contrast to the patterns in the field 'paths', the command can be specified a
 Similar to the `styleFile` field, this configuration will be replaced by the **`--command`** command-line parameter, if provided. When specifying a relative path specified as command line parameter the path is resolved relative to the current *working directory*.
 
 > **Notice:** It is important that your style file is compatible with the version of `clang-format` that you are using. This is the main reason why `clang-format` is not installed with this tool.
+
+> **Notice:** Configuration files aim to be cross-platform as well. It is therefore **allowed to omit the `.exe` extension** for the `clang-format` executable. This also applies to the `--command` parameter.
 
 # Command-line Parameters
 
@@ -259,7 +261,7 @@ By default, the tool will process each resolved path one by one. This can be rat
 
 ## Specifying an alternative style file and command
 
-The command-line options `--style` and `--command` allow specifying a `.clang-format` file and the command to use for executing `clang-format`. Please refer to the corresponding section in the previous description of the `.json` configuration file (fields `styleFile` and `command`).
+The command-line options `--style` and `--command` allow specifying a `.clang-format` file and the command to use for executing `clang-format`. Please refer to the description of the `.json` configuration file for the [fields `styleFile`](#specifying-a-clang-format-style-file-and-a-root-directory) [and `command`](#specifying-the-clang-format-command).
 
 > **Remark:** Specifying `--style` requires the field `styleRoot` to be configured.
 

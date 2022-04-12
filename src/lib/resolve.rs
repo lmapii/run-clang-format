@@ -11,14 +11,9 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
         Some(path) => {
             let mut full_path = path::PathBuf::from(data.json.root.as_path());
             full_path.push(path);
-            Some(
-                utils::file_with_name_or_ext(full_path, ".clang-format")
-                    .wrap_err("Invalid configuration for 'styleFile''")
-                    .suggestion(format!(
-                        "Check the content of the field 'styleFile' in {}.",
-                        data.json.name
-                    ))?,
-            )
+            // do not perform the validation for the 'styleFile' yet since a valid override
+            // might have been passed as parameter to the tool
+            Some(full_path)
         }
     };
 
@@ -33,7 +28,16 @@ fn resolve_style_file(data: &cli::Data) -> eyre::Result<eyre::Result<path::PathB
         },
         Some(s_cfg) => match &data.style {
             // style defined in the .json configuration file but not as CLI parameter
-            None => Ok(path::PathBuf::from(s_cfg.as_path()).canonicalize().unwrap()),
+            None => {
+                // perform the evaluation of the style parameter only once it is used
+                let path = utils::file_with_name_or_ext(s_cfg.as_path(), ".clang-format")
+                    .wrap_err("Invalid configuration for 'styleFile'")
+                    .suggestion(format!(
+                        "Check the content of the field 'styleFile' in {}.",
+                        data.json.name
+                    ))?;
+                Ok(path.canonicalize().unwrap())
+            }
             // style defined in both, the .json configuration file and as CLI parameter
             Some(s_cli) => {
                 log::debug!(
@@ -139,7 +143,7 @@ pub fn command(data: &cli::Data) -> eyre::Result<path::PathBuf> {
     };
 
     if from_json {
-        return utils::filename_or_exists(cmd.as_path(), Some(data.json.root.as_path()))
+        return utils::executable_or_exists(cmd.as_path(), Some(data.json.root.as_path()))
             .wrap_err("Invalid configuration for field 'command'")
             .suggestion(
                 "When using relative paths for the field 'command' please \
@@ -155,6 +159,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
+    #[cfg(not(windows))]
     fn test_command_path() {
         #[derive(Debug)]
         struct TestPaths {

@@ -152,7 +152,7 @@ impl Builder {
         let command = match self.matches.value_of_os("command") {
             None => None,
             Some(_) => Some(
-                utils::filename_or_exists(self.path_for_key("command", false)?, None)
+                utils::executable_or_exists(self.path_for_key("command", false)?, None)
                     .wrap_err("Invalid parameter for option --command")
                     .suggestion(
                         "Please make sure that '--command' is either a valid absolute path, \
