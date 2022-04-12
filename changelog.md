@@ -1,4 +1,10 @@
 
+# 1.2.0
+
+- The tool is now subject to some very basic integration tests, but executed on Windows, macos and Linux (Ubuntu).
+- If executed on Windows it is now possible to omit the `.exe` extension for the CLI parameter `--command` and the `<JSON>` field `command` respectively. This allows to use configuration files on all operating systems.
+- The fields `styleFile` and `command` in the configuration file are now only evaluated if no override is provided by the command line parameter `--style` or `--command`.
+
 # 1.1.0
 
 - Support for relative paths for the field 'command'.
