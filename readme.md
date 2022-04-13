@@ -22,7 +22,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
 - This tool assumes that `clang-format` is installed and in your path. The command can be specified in your [configuration file](#specifying-the-clang-format-command) or as a [command-line parameter](#specifying-an-alternative-style-file-and-command).
 - Paths can be specified using [glob- or Unix-style path syntax](#glob--and-path-syntax).
 - Formatting is [executed in parallel](#speeding-up-the-execution) if the `-j` option is specified.
-- To check the formatting of files without changing the content this tool can be executed in [check mode](#checking-if-the-format-matches-the-provided-style).
+- To check the formatting of files without changing the content this tool can be executed in [`--check` mode](#checking-if-the-format-matches-the-provided-style).
 
 # Contents <!-- omit in toc -->
 
@@ -269,7 +269,7 @@ The command-line options `--style` and `--command` allow specifying a `.clang-fo
 
 ## Checking if the format matches the provided style
 
-When specifying the command-line options `--check` this tool will execute in check mode, i.e., instead of trying to format all files resolved from the given field `paths` the tool will execute `clang-format` with the parameters `--dry-run -WError` to check whether the style matches the style as specified in the `.clang-format` style file.
+When specifying the command-line option `--check` this tool will execute in check mode, i.e., instead of trying to format all files resolved from the given field `paths`, the tool will execute `clang-format` with the parameters `--dry-run -WError` to check whether the style matches the configuration in `.clang-format`.
 
 > **Remark:** Specifying `--check` requires `clang-format` version 10 or higher since the `--dry-run` flag has been introduced only with this version of `clang-format`. This tool will check the version of the specified command and produce an error if the option is not supported.
 
