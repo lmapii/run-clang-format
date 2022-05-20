@@ -12,3 +12,5 @@ thumbs.db
 
 /target
 _notes.md
+artifacts
+docker

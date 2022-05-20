@@ -77,23 +77,19 @@ pub fn build_glob_set_from<'a>(
 fn build_glob_set(filter: &Option<Vec<String>>) -> eyre::Result<Option<Vec<globmatch::GlobSet>>> {
     let filter = match filter {
         None => None,
-        Some(paths) => Some(glob_sets(paths, !cfg!(windows))?),
+        Some(paths) => {
+            let candidates: Vec<Result<_, String>> = paths
+                .iter()
+                .map(|pattern| {
+                    globmatch::Builder::new(pattern)
+                        .case_sensitive(!cfg!(windows))
+                        .build_glob_set()
+                })
+                .collect();
+            Some(extract_patterns(candidates)?)
+        }
     };
     Ok(filter)
-}
-
-fn glob_sets(globs: &[String], case_sensitive: bool) -> eyre::Result<Vec<globmatch::GlobSet>> {
-    let candidates: Vec<Result<_, String>> = globs
-        .iter()
-        .map(|pattern| {
-            globmatch::Builder::new(pattern)
-                .case_sensitive(case_sensitive)
-                .build_glob_set()
-        })
-        .collect();
-
-    let candidates = extract_patterns(candidates)?;
-    Ok(candidates)
 }
 
 pub fn match_paths<P>(
