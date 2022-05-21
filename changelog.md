@@ -1,4 +1,8 @@
 
+# 1.4.0
+
+- Renamed project to `run-clang-format`
+
 # 1.3.0
 
 - Added command-line parameter `--check`, supported for `clang-format` version 10 or higher. This runs `clang-format --dry-run -WError` on all resolved paths to check whether the formatting matches the specified file.

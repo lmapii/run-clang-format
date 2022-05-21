@@ -96,17 +96,17 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          staging="run_clang_format-${{ needs.create-release.outputs.app_version }}-${{ matrix.tuple.target }}"
+          staging="run-clang-format-${{ needs.create-release.outputs.app_version }}-${{ matrix.tuple.target }}"
           mkdir -p "$staging"
 
           cp {readme.md,LICENSE,changelog.md} "$staging/"
 
           if [ "${{ matrix.tuple.os }}" = "windows-latest" ]; then
-            cp "target/${{ matrix.tuple.target }}/release/run_clang_format.exe" "$staging/"
+            cp "target/${{ matrix.tuple.target }}/release/run-clang-format.exe" "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
           else
-            cp "target/${{ matrix.tuple.target }}/release/run_clang_format" "$staging/"
+            cp "target/${{ matrix.tuple.target }}/release/run-clang-format" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
           fi

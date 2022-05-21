@@ -1,6 +1,6 @@
-# run_clang_format <!-- omit in toc -->
+# run-clang-format <!-- omit in toc -->
 
-[![Build status](https://github.com/lmapii/run_clang_format/workflows/ci/badge.svg)](https://github.com/lmapii/run_clang_format/actions)
+[![Build status](https://github.com/lmapii/run-clang-format/workflows/ci/badge.svg)](https://github.com/lmapii/run-clang-format/actions)
 
 CLI application for running [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) for an existing `.clang-format` file on a set of files, specified using globs in a `.json` configuration file.
 
@@ -9,12 +9,12 @@ CLI application for running [`clang-format`](https://clang.llvm.org/docs/ClangFo
 The minimal command for executing this is the following:
 
 ```bash
-$ run_clang_format path/to/format.json
+$ run-clang-format path/to/format.json
 ```
 
-Execute `run_clang_format --help` for more details, or `run_clang_format schema` for a complete schema description of the configuration file.
+Execute `run-clang-format --help` for more details, or `run-clang-format schema` for a complete schema description of the configuration file.
 
-<img src="https://github.com/lmapii/run_clang_format/blob/main/screenshots/demo.gif?raw=true">
+<img src="https://github.com/lmapii/run-clang-format/blob/main/screenshots/demo.gif?raw=true">
 
 **Hints for the impatient user:**
 
@@ -47,7 +47,7 @@ Execute `run_clang_format --help` for more details, or `run_clang_format schema`
 
 # The JSON configuration file
 
-The core of this CLI tool is a `.json` configuration file that specifies where all the files that should be formatted can be found. We'll be using a demo file, building it up step by step to explain the individual fields. The structure of the `.json` file is also documented in the `schema` sub-command (execute `run_clang_format schema`). To get started, we create an empty `.json` file that contains an empty object.
+The core of this CLI tool is a `.json` configuration file that specifies where all the files that should be formatted can be found. We'll be using a demo file, building it up step by step to explain the individual fields. The structure of the `.json` file is also documented in the `schema` sub-command (execute `run-clang-format schema`). To get started, we create an empty `.json` file that contains an empty object.
 
 ```json
 {
@@ -98,7 +98,7 @@ Clearly, no one wants to specify all paths manually, which is why this tool supp
 Assuming you have `clang-format` installed and a `.clang-format` file in one of the parent directories of your sources, e.g., in *ProjectRoot*, this is all you need::
 
 ```
-$ run_clang_format path/to/format.json
+$ run-clang-format path/to/format.json
 ```
 
 Notice that the working directory of the tool is irrelevant since all paths are specified relative to the provided `format.json`. For now, this is all you need to know, we'll go into details about the supported scenarios later and will continue exploring the configuration options in the `.json` file.
@@ -156,7 +156,7 @@ In the above example, any `Hal*` folder within any of the paths will be filtered
 
 ## Specifying a `.clang-format` style file and a root directory
 
-If no `.clang-format` file is placed in the root directory of your project (assuming there is one), executing `run_clang_format` without any additional command-line parameters (explained below) would not produce the desired results - quite the opposite since `clang-format` checks any root folder until it might encounter a `.clang-format` file. Therefore the configuration file allows to specify the format file using the field **`styleFile`**, and the root common root directory of all paths using **`styleRoot`**:
+If no `.clang-format` file is placed in the root directory of your project (assuming there is one), executing `run-clang-format` without any additional command-line parameters (explained below) would not produce the desired results - quite the opposite since `clang-format` checks any root folder until it might encounter a `.clang-format` file. Therefore the configuration file allows to specify the format file using the field **`styleFile`**, and the root common root directory of all paths using **`styleRoot`**:
 
 ```
 ProjectRoot
@@ -187,7 +187,7 @@ ProjectRoot
 
 The name *or the extension* of the `styleFile` must be `.clang-format`. This allows you to store multiple `.clang-format` files in the same directory, e.g., `driver.clang-format` and `application.clang-format`.
 
-When formatting the files, `run_clang_format` will:
+When formatting the files, `run-clang-format` will:
 - Copy the provided style file to the specified root directory (renaming it to `.clang-format`, if necessary),
 - execute `clang-format` for all resolved paths,
 - and finally remove the temporary file.
@@ -231,9 +231,9 @@ Similar to the `styleFile` field, this configuration will be replaced by the **`
 All available command-line parameters should be sufficiently described by the tool itself, when providing any of the options `-h, --help, help`. Also, the JSON schema of the configuration file can be displayed by using the `schema` subcommand. This JSON schema also contains descriptions for each of the options described above:
 
 ```
-$ run_clang_format --help
-$ run_clang_format help
-$ run_clang_format schema
+$ run-clang-format --help
+$ run-clang-format help
+$ run-clang-format schema
 ```
 
 In the following, the most important options are described briefly.
@@ -256,8 +256,8 @@ To turn off any kind of output except for error messages, use the `--quiet` opti
 
 By default, the tool will process each resolved path one by one. This can be rather slow for large projects. The command-line option `-j, --jobs` allows specifying the number of jobs that should be used for formatting.
 
-* If specified without a value, e.g., `run_clang_format format.json -j`, then all available logical cores will be used for formatting.
-* If specified *with* a value, e.g., `run_clang_format format.json -j 3`, then the tool will only spawn as many jobs as specified.
+* If specified without a value, e.g., `run-clang-format format.json -j`, then all available logical cores will be used for formatting.
+* If specified *with* a value, e.g., `run-clang-format format.json -j 3`, then the tool will only spawn as many jobs as specified.
 
 > **Remark:** On slower machines, when executed with normal log level, the progress bar might flicker since the terminal might not be able to re-draw the new line fast enough. Currently, there's no way around this.
 
