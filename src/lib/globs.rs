@@ -3,28 +3,6 @@ use std::path;
 #[allow(unused_imports)]
 use color_eyre::{eyre::eyre, eyre::WrapErr, Help};
 
-fn extract_patterns<T>(candidates: Vec<Result<T, String>>) -> eyre::Result<Vec<T>> {
-    let failures: Vec<_> = candidates
-        .iter()
-        .filter_map(|f| match f {
-            Ok(_) => None,
-            Err(e) => Some(e),
-        })
-        .collect();
-
-    if !failures.is_empty() {
-        eyre::bail!(
-            "Failed to compile patterns: \n{}",
-            failures
-                .iter()
-                .map(|err| err.to_string())
-                .collect::<Vec<_>>()
-                .join("\n")
-        )
-    }
-    Ok(candidates.into_iter().flatten().collect())
-}
-
 fn wrap_result<T>(result: eyre::Result<T>, field: &str, file: &str) -> eyre::Result<T> {
     result
         .wrap_err(format!("Error while parsing '{}'", field))
@@ -43,27 +21,14 @@ pub fn build_matchers_from<'a, P>(
 where
     P: AsRef<path::Path>,
 {
-    wrap_result(build_matchers(globs, root), field, file)
-}
+    // https://stackoverflow.com/a/33217302/7281683
+    let globs: Vec<_> = globs.iter().map(|s| &**s).collect();
 
-fn build_matchers<P>(
-    globs: &[String],
-    root: P,
-) -> eyre::Result<Vec<globmatch::Matcher<path::PathBuf>>>
-where
-    P: AsRef<path::Path>,
-{
-    let candidates: Vec<Result<_, String>> = globs
-        .iter()
-        .map(|pattern| {
-            globmatch::Builder::new(pattern)
-                .case_sensitive(!cfg!(windows))
-                .build(root.as_ref())
-        })
-        .collect();
-
-    let candidates = extract_patterns(candidates)?;
-    Ok(candidates)
+    wrap_result(
+        globmatch::wrappers::build_matchers(&globs, root).or_else(|err| Err(eyre!(err))),
+        field,
+        file,
+    )
 }
 
 pub fn build_glob_set_from<'a>(
@@ -71,25 +36,15 @@ pub fn build_glob_set_from<'a>(
     field: &str,
     file: &str,
 ) -> eyre::Result<Option<Vec<globmatch::GlobSet<'a>>>> {
-    wrap_result(build_glob_set(filter), field, file)
-}
+    let filter = filter
+        .as_ref()
+        .map(|filter| filter.iter().map(|s| &**s).collect());
 
-fn build_glob_set(filter: &Option<Vec<String>>) -> eyre::Result<Option<Vec<globmatch::GlobSet>>> {
-    let filter = match filter {
-        None => None,
-        Some(paths) => {
-            let candidates: Vec<Result<_, String>> = paths
-                .iter()
-                .map(|pattern| {
-                    globmatch::Builder::new(pattern)
-                        .case_sensitive(!cfg!(windows))
-                        .build_glob_set()
-                })
-                .collect();
-            Some(extract_patterns(candidates)?)
-        }
-    };
-    Ok(filter)
+    wrap_result(
+        globmatch::wrappers::build_glob_set(&filter, !cfg!(windows)).or_else(|err| Err(eyre!(err))),
+        field,
+        file,
+    )
 }
 
 pub fn match_paths<P>(
@@ -100,80 +55,12 @@ pub fn match_paths<P>(
 where
     P: AsRef<path::Path>,
 {
-    let mut filtered = vec![];
+    let (paths, filtered) = globmatch::wrappers::match_paths(candidates, filter, filter_post);
 
-    let paths = candidates
+    let paths = paths
         .into_iter()
-        .flat_map(|m| {
-            m.into_iter()
-                .filter_entry(|path| {
-                    match &filter {
-                        // yield all entries if no pattern have been provided
-                        // but try_for_each yields all elements for an empty vector (see test)
-                        // Some(patterns) if patterns.is_empty() => true,
-                        // Some(patterns) if !patterns.is_empty() => {
-                        Some(patterns) => {
-                            let do_filter = patterns
-                                .iter()
-                                .try_for_each(|glob| match glob.is_match(path) {
-                                    true => None,      // path is a match, abort on first match
-                                    false => Some(()), // path is not a match, continue with 'ok'
-                                })
-                                .is_none(); // the value remains "Some" if no match was encountered
-                            !do_filter
-                        }
-                        _ => !globmatch::is_hidden_entry(path), // yield entries that are not hidden
-                    }
-                })
-                .flatten()
-                .collect::<Vec<_>>()
-        })
-        .filter(|path| path.as_path().is_file()) // accept only files
-        .filter(|path| match &filter_post {
-            None => true,
-            Some(patterns) => {
-                let do_filter = patterns
-                    .iter()
-                    .try_for_each(|glob| match glob.is_match(path) {
-                        true => None,      // path is a match, abort on first match in filter_post
-                        false => Some(()), // path is not a match, continue with 'ok'
-                    })
-                    .is_none(); // the value remains "Some" if no match was encountered
-                if do_filter {
-                    filtered.push(path::PathBuf::from(path));
-                }
-                !do_filter
-            }
-        });
-
-    let mut paths: Vec<_> = paths.collect();
-    paths.sort_unstable();
-    paths.dedup();
-
-    log::debug!(
-        "paths \n{}",
-        paths
-            .iter()
-            .map(|p| format!("{}", p.canonicalize().unwrap().to_string_lossy()))
-            // .map(|p| format!("{}", p.to_string_lossy()))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-
-    filtered.sort_unstable();
-    filtered.dedup();
-
-    if !filtered.is_empty() {
-        log::debug!(
-            "filtered \n{}",
-            filtered
-                .iter()
-                .map(|p| format!("{}", p.canonicalize().unwrap().to_string_lossy()))
-                // .map(|p| format!("{}", p.to_string_lossy()))
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
-    }
+        .filter(|path| path.as_path().is_file())
+        .collect(); // accept only files
 
     (paths, filtered)
 }
