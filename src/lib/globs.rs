@@ -25,7 +25,7 @@ where
     let globs: Vec<_> = globs.iter().map(|s| &**s).collect();
 
     wrap_result(
-        globmatch::wrappers::build_matchers(&globs, root).or_else(|err| Err(eyre!(err))),
+        globmatch::wrappers::build_matchers(&globs, root).map_err(|err| eyre!(err)),
         field,
         file,
     )
@@ -41,7 +41,7 @@ pub fn build_glob_set_from<'a>(
         .map(|filter| filter.iter().map(|s| &**s).collect());
 
     wrap_result(
-        globmatch::wrappers::build_glob_set(&filter, !cfg!(windows)).or_else(|err| Err(eyre!(err))),
+        globmatch::wrappers::build_glob_set(&filter, !cfg!(windows)).map_err(|err| eyre!(err)),
         field,
         file,
     )
