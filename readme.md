@@ -380,7 +380,7 @@ In this case, it is only necessary to specify the `paths` and the `styleRoot` in
 
 ## Multiple `.clang-format` files
 
-In case other `.clang-format` files exist in different folders, `.clang-format` will always use the first file that it finds when going back from the file to format. E.g., for `header.c` the file `ProjectRoot/Some/Layer/.clang-format` will be used.
+In case other `.clang-format` files exist in different folders, `.clang-format` will always use the first file that it finds when going back from the file to format. E.g., for `header.h` the file `ProjectRoot/Some/Layer/.clang-format` will be used.
 
 ```
 ProjectRoot
@@ -399,7 +399,7 @@ When executing the tool with the following configuration, the files in `Some/Pat
 ```json
 {
   "paths": [
-    "./Layers/**/*.[ch]",
+    "./Some/**/*.[ch]",
   ],
   "styleFile": ".clang-format",
   "styleRoot": "../"

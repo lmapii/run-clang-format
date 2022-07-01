@@ -227,7 +227,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             let str = format!("Cleaning up temporary file {}\n", path.to_string_lossy());
             let str = console::style(str).dim().italic();
 
-            log::info!("{}", str);
+            log::info!("\n{}", str);
             let _ = fs::remove_file(path);
         }
     });
@@ -272,8 +272,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
                 console::Style::new().green().bold(),
             );
 
-            let _ = cmd
-                .run_format(&path)
+            cmd.run_format(&path)
                 .wrap_err(format!("Failed to format {}", path.to_string_lossy()))
                 .suggestion(
                     "Please make sure that your style file matches \
@@ -319,7 +318,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
             if !failures.is_empty() {
                 Err(eyre::eyre!(format!(
-                    "Format check failed for the following files:\n{}",
+                    "Format check failed for the following files:\n{}\n ",
                     failures
                         .into_iter()
                         .map(|result| format!("{}", result.0.to_string_lossy()))
@@ -346,7 +345,7 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         log::info!("{} Finished in {:#?}", step.next(), duration);
     }
 
-    log::info!(" "); // just an empty newline
+    // log::info!(" "); // just an empty newline
     Ok(())
 }
 

@@ -16,8 +16,8 @@ impl FromStr for Version {
 
         Ok(Version {
             major: caps[1].parse().map_err(|_| "Invalid major version")?,
-            minor: caps[1].parse().map_err(|_| "Invalid minor version")?,
-            patch: caps[1].parse().map_err(|_| "Invalid patch level")?,
+            minor: caps[2].parse().map_err(|_| "Invalid minor version")?,
+            patch: caps[3].parse().map_err(|_| "Invalid patch level")?,
         })
     }
 }
@@ -153,7 +153,7 @@ impl Runner {
     where
         P: AsRef<path::Path>,
     {
-        let _ = self.supports_check_or_err()?;
+        self.supports_check_or_err()?;
         let mut cmd = process::Command::new(self.cmd.as_path());
 
         cmd.arg(file.as_ref().as_os_str())
