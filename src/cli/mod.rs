@@ -66,6 +66,7 @@ pub struct Data {
     pub cmd: Command,
 }
 
+#[derive(Debug)]
 pub struct Builder {
     pub matches: clap::ArgMatches,
 }

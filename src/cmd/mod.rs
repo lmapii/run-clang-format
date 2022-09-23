@@ -1,6 +1,6 @@
 use std::{io, path, process, str::FromStr};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct Version {
     major: u8,
     minor: u8,
@@ -22,6 +22,7 @@ impl FromStr for Version {
     }
 }
 
+#[derive(Debug)]
 pub struct Runner {
     cmd: path::PathBuf,
     version: Option<Version>,
