@@ -604,7 +604,7 @@ checksum = "a3f87b73ce11b1619a3c6332f45341e0047173771e8b8b73f87bfeefb7b56244"
 
 [[package]]
 name = "run-clang-format"
-version = "1.4.4"
+version = "1.4.5"
 dependencies = [
  "assert_cmd",
  "clap",
