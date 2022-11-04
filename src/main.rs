@@ -1,9 +1,5 @@
 #![warn(missing_debug_implementations, rust_2018_idioms)]
 
-pub mod cli;
-pub mod cmd;
-mod lib;
-
 fn main() -> eyre::Result<()> {
     // println!(
     //     "Executing \n{} from \n{}\n",
@@ -11,6 +7,6 @@ fn main() -> eyre::Result<()> {
     //     std::env::current_dir().unwrap().to_string_lossy()
     // );
 
-    let data = cli::Builder::build().parse()?;
-    lib::run(data)
+    let data = run_clang_format::cli::Builder::build().parse()?;
+    run_clang_format::run(data)
 }
