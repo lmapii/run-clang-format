@@ -144,7 +144,7 @@ impl Builder {
         }
 
         let json_path = self.path_for_key("JSON", true)?;
-        let json = JsonModel::load(&json_path).wrap_err("Invalid parameter for <JSON>")?;
+        let json = JsonModel::load(json_path).wrap_err("Invalid parameter for <JSON>")?;
 
         let style = match self.matches.is_present("style") {
             false => None,
@@ -152,7 +152,7 @@ impl Builder {
                 let style_path = self
                     .path_for_key("style", true)
                     .wrap_err("Invalid parameter for option --style")?;
-                let path = utils::file_with_name_or_ext(&style_path, ".clang-format")
+                let path = utils::file_with_name_or_ext(style_path, ".clang-format")
                     .wrap_err("Invalid parameter for option --style")?;
                 Some(path)
             }
