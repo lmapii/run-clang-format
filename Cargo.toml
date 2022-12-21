@@ -1,6 +1,6 @@
 [package]
 name = "run-clang-format"
-version = "1.4.6"
+version = "1.4.7"
 authors = ["Martin Lampacher <lmapii@gmail.com>"]
 description = """
 Cross platform CLI wrapper for executing clang-format based paths or globs specified
@@ -36,8 +36,6 @@ console = { version = "0.15", default-features = false, features = ["ansi-parsin
 doc-comment = "0.3"
 assert_cmd = "2.0.4"
 
-# [profile.release]
+[profile.release]
+strip = true
 # strip="debuginfo"
-# error: failed to run custom build command for `libc v0.2.123`
-# Caused by:
-#   process didn't exit successfully: `/path/to/run-clang-format/target/release/build/libc-f010f5927a4f70bf/build-script-build` (signal: 9, SIGKILL: kill)
