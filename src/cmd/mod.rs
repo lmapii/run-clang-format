@@ -43,7 +43,7 @@ impl Runner {
             Some(code) => {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("Process terminated with code {}", code),
+                    format!("Process terminated with code {code}"),
                 ));
             }
             None => {
@@ -86,7 +86,7 @@ impl Runner {
         self.version = Some(stdout.parse::<Version>().map_err(|err| {
             io::Error::new(
                 io::ErrorKind::Other,
-                format!("Failed to parse --version output {}: {}", stdout, err),
+                format!("Failed to parse --version output {stdout}: {err}"),
             )
         })?);
         Ok(())
@@ -126,7 +126,7 @@ impl Runner {
             if stderr.len() != 0 {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
-                    format!("{}\n---\n{}---", err, stderr),
+                    format!("{err}\n---\n{stderr}---"),
                 ));
             }
             return Err(err);
