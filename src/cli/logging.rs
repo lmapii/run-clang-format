@@ -9,7 +9,7 @@ fn log_level(matches: &clap::ArgMatches) -> log::Level {
         log::Level::Error
     } else {
         match matches.get_count("verbose") {
-            // ArgMatches::occurrences_of which will return 0 if the argument was not used at
+            // ArgMatches::get_count which will return 0 if the argument was not used at
             // runtime. This demo always displays error or warning messages, so by default -v is
             // always used. The --quiet option must be used to silence all.
             // _ => log::Level::Error,

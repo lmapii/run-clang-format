@@ -174,7 +174,6 @@ impl Builder {
         //     .value_of_os("command")
         //     .and_then(|_| Some(self.path_for_key("command", false)?));
 
-        // unwrap is safe to call since jobs has a default value
         let jobs = {
             if let Some(val) = self.matches.get_one::<String>("jobs") {
                 let val: u8 = val
