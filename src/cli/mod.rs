@@ -102,9 +102,8 @@ impl Builder {
                 arg!(-j --jobs ... "Optional parameter to define the number of jobs to use. \
                                     If provided without value (e.g., '-j') all available logical \
                                     cores are used. Maximum value is 255")
-                .default_value("1")
-                .num_args(1)
                 .required(false)
+                .num_args(0..=1)
                 .action(clap::ArgAction::Set),
             )
             .arg(arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.").global(true))
@@ -177,14 +176,15 @@ impl Builder {
 
         // unwrap is safe to call since jobs has a default value
         let jobs = {
-            let val: u8 = self
-                .matches
-                .get_one::<String>("jobs")
-                .unwrap()
-                .parse()
-                .map_err(|_| eyre!("Invalid parameter for option --jobs"))
-                .suggestion("Please provide a number in the range [0 .. 255]")?;
-            Some(val)
+            if let Some(val) = self.matches.get_one::<String>("jobs") {
+                let val: u8 = val
+                    .parse()
+                    .map_err(|_| eyre!("Invalid parameter for option --jobs"))
+                    .suggestion("Please provide a number in the range [0 .. 255]")?;
+                Some(val)
+            } else {
+                None
+            }
         };
 
         let cmd = if self.matches.get_flag("check") {
