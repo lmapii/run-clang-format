@@ -5,10 +5,10 @@ use env_logger::fmt;
 use super::handlers;
 
 fn log_level(matches: &clap::ArgMatches) -> log::Level {
-    if matches.is_present("quiet") {
+    if matches.get_flag("quiet") {
         log::Level::Error
     } else {
-        match matches.occurrences_of("verbose") {
+        match matches.get_count("verbose") {
             // ArgMatches::occurrences_of which will return 0 if the argument was not used at
             // runtime. This demo always displays error or warning messages, so by default -v is
             // always used. The --quiet option must be used to silence all.

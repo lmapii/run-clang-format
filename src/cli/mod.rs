@@ -72,7 +72,7 @@ pub struct Builder {
 }
 
 impl Builder {
-    fn app() -> clap::Command<'static> {
+    fn app() -> clap::Command {
         clap::Command::new(crate_name!())
             .arg_required_else_help(true)
             .version(crate_version!())
@@ -81,46 +81,43 @@ impl Builder {
             .arg(
                 arg!(<JSON>)
                     .help("Path/configuration as .json")
-                    // invalid UTF-8 characters must be allowed since we'll be using value_of_os
-                    // and paths do not necessarily only contain valid UTF-8 characters.
-                    .allow_invalid_utf8(true),
+                    .value_parser(clap::value_parser!(std::path::PathBuf)),
             )
             .arg(
                 arg!(-s --style ... "Optional path to .clang-format style file. \
                                      Overrides <JSON> configuration")
-                .allow_invalid_utf8(true)
-                .takes_value(true)
-                .required(false),
+                .value_parser(clap::value_parser!(std::path::PathBuf))
+                .required(false)
+                .action(clap::ArgAction::Set),
             )
             .arg(
                 arg!(-c --command ... "Optional path to executable or clang-format command. \
                                        Overrides <JSON> configuration, defaults to `clang-format`")
                 // .default_value("clang-format")
-                .allow_invalid_utf8(true)
-                .takes_value(true)
-                .required(false),
+                .value_parser(clap::value_parser!(std::path::PathBuf))
+                .required(false)
+                .action(clap::ArgAction::Set),
             )
             .arg(
                 arg!(-j --jobs ... "Optional parameter to define the number of jobs to use. \
                                     If provided without value (e.g., '-j') all available logical \
                                     cores are used. Maximum value is 255")
                 .default_value("1")
-                .takes_value(true)
-                .min_values(0)
-                .max_values(1)
-                .required(false),
+                .num_args(1)
+                .required(false)
+                .action(clap::ArgAction::Set),
             )
-            .arg(
-                arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.")
-                    .global(true)
-                    .multiple_values(false),
-            )
+            .arg(arg!(-v --verbose ... "Verbosity, use -vv... for verbose output.").global(true))
             .arg(
                 arg!(--check "Run in check mode instead of formatting. Use -vv to \
                               log the output of clang-format for each mismatch. \
-                              Requires clang-format 10 or higher."),
+                              Requires clang-format 10 or higher.")
+                .action(clap::ArgAction::SetTrue),
             )
-            .arg(arg!(-q --quiet "Suppress all output except for errors; overrides -v"))
+            .arg(
+                arg!(-q --quiet "Suppress all output except for errors; overrides -v")
+                    .action(clap::ArgAction::SetTrue),
+            )
             .subcommand_negates_reqs(true)
             .subcommand(
                 clap::Command::new("schema")
@@ -146,7 +143,7 @@ impl Builder {
         let json_path = self.path_for_key("JSON", true)?;
         let json = JsonModel::load(json_path).wrap_err("Invalid parameter for <JSON>")?;
 
-        let style = match self.matches.is_present("style") {
+        let style = match self.matches.contains_id("style") {
             false => None,
             true => {
                 let style_path = self
@@ -158,7 +155,7 @@ impl Builder {
             }
         };
 
-        let command = match self.matches.value_of_os("command") {
+        let command = match self.matches.get_one::<std::path::PathBuf>("command") {
             None => None,
             Some(_) => Some(
                 utils::executable_or_exists(self.path_for_key("command", false)?, None)
@@ -180,21 +177,17 @@ impl Builder {
 
         // unwrap is safe to call since jobs has a default value
         let jobs = {
-            let mut val = self.matches.values_of("jobs").unwrap();
-            if val.len() == 0 {
-                None
-            } else {
-                let val: u8 = val
-                    .next()
-                    .unwrap()
-                    .parse()
-                    .map_err(|_| eyre!("Invalid parameter for option --jobs"))
-                    .suggestion("Please provide a number in the range [0 .. 255]")?;
-                Some(val)
-            }
+            let val: u8 = self
+                .matches
+                .get_one::<String>("jobs")
+                .unwrap()
+                .parse()
+                .map_err(|_| eyre!("Invalid parameter for option --jobs"))
+                .suggestion("Please provide a number in the range [0 .. 255]")?;
+            Some(val)
         };
 
-        let cmd = if self.matches.is_present("check") {
+        let cmd = if self.matches.get_flag("check") {
             Command::Check
         } else {
             Command::Format
@@ -212,7 +205,7 @@ impl Builder {
     fn path_for_key(&self, key: &str, check_exists: bool) -> eyre::Result<path::PathBuf> {
         let path = self
             .matches
-            .value_of_os(key)
+            .get_one::<std::path::PathBuf>(key)
             .map(std::path::PathBuf::from)
             .ok_or(eyre!(format!(
                 "Could not convert parameter '{key}' to path"
