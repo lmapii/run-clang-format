@@ -15,7 +15,7 @@ license-file = "LICENSE"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4", features = ["derive", "cargo"] }
+clap = { version = "4", features = ["derive", "cargo", "wrap_help"] }
 schemars = "0.8"
 serde = "1.0"
 serde_json = "1.0"
