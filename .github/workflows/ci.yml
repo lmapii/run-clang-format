@@ -42,6 +42,9 @@ jobs:
     name: Compile ${{ matrix.tuple.build }}
     needs: [rustfmt, clippy]
     runs-on: ${{ matrix.tuple.os }}
+    env:
+      # For some checks&builds we use cross instead of cargo.
+      CARGO: cargo
     strategy:
       fail-fast: false
       matrix:
@@ -85,29 +88,29 @@ jobs:
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
-          # https://github.com/actions-rs/toolchain
           # this specifies the rustup toolchain
           toolchain: ${{ matrix.tuple.rust }}
           target: ${{ matrix.tuple.target }}
 
+      - name: Install cross
+        if: matrix.tuple.cross != false
+        run: |
+          cargo install cross
+          echo "CARGO=cross" >> $GITHUB_ENV
+
       - name: Check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          # this specifies the target to use for cross compilation (must exist in rustup)
-          args: --verbose --target=${{ matrix.tuple.target }}
-          use-cross: ${{ matrix.tuple.cross }}
+        run: |
+          echo "cargo command is: ${{ env.CARGO }}"
+          # this runs check for the target to use for (cross) compilation (must exist in rustup)
+          ${{ env.CARGO }} check --verbose --target=${{ matrix.tuple.target }}
 
       - name: Build artifact
-        uses: actions-rs/cargo@v1
         if: matrix.tuple.archive != false && github.event_name == 'pull_request'
-        with:
-          command: build
-          args: --release --target=${{ matrix.tuple.target }}
-          use-cross: ${{ matrix.tuple.cross }}
         env:
           CI_PKG_VERSION_PRE_RELEASE: --alpha
           CI_PKG_VERSION_BUILD: ${{ github.run_number }}
+        run: |
+          ${{ env.CARGO }} build --release --target=${{ matrix.tuple.target }}
 
       - name: Archive
         if: matrix.tuple.archive != false && github.event_name == 'pull_request'
@@ -143,7 +146,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # testing on the real VMs only, not via CROSS
+          # testing on the real VMs only, not via cross
           - ubuntu-22.04
           - macos-latest
           - windows-latest

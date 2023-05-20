@@ -8,3 +8,7 @@ rustflags = ["-C", "target-feature=+crt-static"]
 
 [target.i686-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# [env]
+# CI_PKG_VERSION_PRE_RELEASE = "alphabeta"
+# CI_PKG_VERSION_BUILD = "1234"
