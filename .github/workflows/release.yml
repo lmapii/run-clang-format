@@ -15,9 +15,10 @@ jobs:
   create-release:
     name: create-release
     runs-on: ubuntu-latest
-    # env:
-    #   # Set to force version number, e.g., when no tag exists.
-    #   APP_VERSION: v255.255.255
+    # TODO: revert
+    env:
+      # Set to force version number, e.g., when no tag exists.
+      APP_VERSION: v255.255.255
     outputs:
       # create an output release from future step (by id)
       upload_url: ${{ steps.release.outputs.upload_url }}
@@ -31,13 +32,11 @@ jobs:
           echo "version is: ${{ env.APP_VERSION }}"
       - name: Create GitHub release
         id: release
-        uses: actions/create-release@v1
-        env:
-          # This token is provided by actions/create-release@v1, no need to create a token
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ env.APP_VERSION }}
-          release_name: ${{ env.APP_VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.APP_VERSION }}
+          name: ${{ env.APP_VERSION }}
 
   build-release:
     name: build-release
