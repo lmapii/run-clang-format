@@ -283,7 +283,13 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
                         Err(err) => {
                             let print_path = match &strip_root {
                                 None => path.clone(),
-                                Some(strip) => path.strip_prefix(strip).unwrap().to_path_buf(),
+                                Some(strip) => {
+                                    if let Ok(path) = path.strip_prefix(strip) {
+                                        path.to_path_buf()
+                                    } else {
+                                        path.clone()
+                                    }
+                                }
                             };
                             Some((print_path, format!("{err}")))
                         }
@@ -346,7 +352,13 @@ fn log_step(
     // let style = console::Style::new().green().bold();
     let print_path = match strip_path {
         None => path,
-        Some(strip) => path.strip_prefix(strip).unwrap(),
+        Some(strip) => {
+            if let Ok(path) = path.strip_prefix(strip) {
+                path
+            } else {
+                path
+            }
+        }
     };
 
     if log_pretty() {
