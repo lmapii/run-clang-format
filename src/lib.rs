@@ -251,6 +251,9 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
     let result: eyre::Result<()> = match data.cmd {
         cli::Command::Format => paths.into_par_iter().try_for_each(|path| {
+            // TODO: instead of strip_root, try to find a common path component
+            // and if it is shorter than the absolute path, use that.
+            // TODO: if there was a path outside of .clang-format it won't work anyhow ?
             log_step(
                 "Formatting",
                 path.as_path(),
