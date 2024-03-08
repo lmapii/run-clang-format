@@ -2,13 +2,13 @@
  * Copyright (c) 2024 Martin Lampacher. All rights reserved.
  */
 
-#include "module_unused.h"
+#include "module_d.h"
 
 /***********************************************************************************************************************
  * Functions
  **********************************************************************************************************************/
 
-void module_unused_init (void)
+void module_d_init (void)
 {
     // nothing to see here
 }

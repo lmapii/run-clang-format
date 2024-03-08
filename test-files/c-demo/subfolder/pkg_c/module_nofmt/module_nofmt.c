@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Martin Lampacher. All rights reserved.
+ * Copyright (c) 2024 Martin Lampacher. All rights reserved.
  */
 
 #include "module_nofmt.h"

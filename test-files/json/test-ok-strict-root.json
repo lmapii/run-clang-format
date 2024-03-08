@@ -1,0 +1,13 @@
+{
+  "description": "same as err-strict-root, but the invalid paths are filtered",
+  "paths": [
+    "../c-demo-err-root/**/*.[ch]",
+    "../../test-files/c-demo/pkg_?/**/*.[ch]",
+    "../c-demo/{project,subfolder}/**/*.[ch]",
+    "../c-demo/**/*.[ch]"
+  ],
+  "filterPost": ["module_nofmt/**", "c-demo-err-root/**"],
+  "styleFile": "../clang-format/named.clang-format",
+  "styleRoot": "../c-demo",
+  "command": "../../artifacts/clang/clang-format"
+}

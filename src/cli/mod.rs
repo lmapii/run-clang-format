@@ -64,6 +64,8 @@ pub struct Data {
     pub jobs: Option<u8>,
     /// Command to execute.
     pub cmd: Command,
+    /// Check that all files are within the .clang-format root directory.
+    pub strict_root: bool,
 }
 
 #[derive(Debug)]
@@ -116,6 +118,17 @@ impl Builder {
             .arg(
                 arg!(-q --quiet "Suppress all output except for errors; overrides -v")
                     .action(clap::ArgAction::SetTrue),
+            )
+            .arg(
+                // See https://github.com/clap-rs/clap/issues/2468
+                arg!(--"strict-root"
+                    "Checks that all files are siblings to the .clang-format root directory. \
+                     Without this option, no checks are performed and files that are not within \
+                     the root directory will be ignored and thus not formatted by clang-format. \
+                     This option should only be enabled if no symlinks, etc., are used since such \
+                     paths may not be resolved reliably. This check is only available if a \
+                     style file or style root directory is specified.")
+                .action(clap::ArgAction::SetTrue),
             )
             .subcommand_negates_reqs(true)
             .subcommand(
@@ -192,12 +205,19 @@ impl Builder {
             Command::Format
         };
 
+        let strict_root = if self.matches.get_flag("strict-root") {
+            true
+        } else {
+            false
+        };
+
         Ok(Data {
             json,
             style,
             command,
             jobs,
             cmd,
+            strict_root,
         })
     }
 
