@@ -205,11 +205,7 @@ impl Builder {
             Command::Format
         };
 
-        let strict_root = if self.matches.get_flag("strict-root") {
-            true
-        } else {
-            false
-        };
+        let strict_root = self.matches.get_flag("strict-root");
 
         Ok(Data {
             json,

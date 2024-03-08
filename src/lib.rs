@@ -242,16 +242,10 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
 
         let outside_root: Vec<&path::PathBuf> = paths
             .iter()
-            .filter_map(|p| {
-                if p.starts_with(style_root) {
-                    None
-                } else {
-                    Some(p)
-                }
-            })
+            .filter(|p| !p.starts_with(style_root))
             .collect();
 
-        if outside_root.len() > 0 {
+        if !outside_root.is_empty() {
             let style_root = style_root.to_string_lossy();
             log::error!(
                 "The following files are outside of the 'styleRoot' directory {}",
@@ -262,11 +256,12 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
                 outside_root.len(),
                 style_root
             ))
-            .suggestion(format!(
+            .suggestion(
                 "Please make sure that all files are in the 'styleRoot' directory. Notice that \
                  the strict root check only works reliably for normal paths and may fail for, \
                  e.g., symlinks."
-            ));
+                    .to_string(),
+            );
         }
     }
 
