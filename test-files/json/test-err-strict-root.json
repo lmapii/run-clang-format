@@ -1,0 +1,13 @@
+{
+  "description": "c-demo-err-root is outside of the specified styleRoot",
+  "paths": [
+    "../c-demo-err-root/**/*.[ch]",
+    "../c-demo/pkg_?/**/*.[ch]",
+    "../c-demo/{project,subfolder}/**/*.[ch]",
+    "../c-demo/**/*.[ch]"
+  ],
+  "filterPost": ["module_nofmt/**"],
+  "styleFile": "../clang-format/named.clang-format",
+  "styleRoot": "../c-demo",
+  "command": "../../artifacts/clang/clang-format"
+}

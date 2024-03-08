@@ -38,6 +38,7 @@ Execute `run-clang-format --help` for more details, or `run-clang-format schema`
   - [Speeding up the execution](#speeding-up-the-execution)
   - [Specifying an alternative style file and command](#specifying-an-alternative-style-file-and-command)
   - [Checking if the format matches the provided style](#checking-if-the-format-matches-the-provided-style)
+  - [Enabling strict `styleRoot` checks](#enabling-strict-styleroot-checks)
 - [Use-cases](#use-cases)
   - [A style file exists and is placed in the root folder](#a-style-file-exists-and-is-placed-in-the-root-folder)
   - [A style file exists but is placed stored outside the root folder](#a-style-file-exists-but-is-placed-stored-outside-the-root-folder)
@@ -272,6 +273,16 @@ The command-line options `--style` and `--command` allow specifying a `.clang-fo
 When specifying the command-line option `--check` this tool will execute in check mode, i.e., instead of trying to format all files resolved from the given field `paths`, the tool will execute `clang-format` with the parameters `--dry-run -WError` to check whether the style matches the configuration in `.clang-format`.
 
 > **Remark:** Specifying `--check` requires `clang-format` version 10 or higher since the `--dry-run` flag has been introduced only with this version of `clang-format`. This tool will check the version of the specified command and produce an error if the option is not supported.
+
+## Enabling strict `styleRoot` checks
+
+The command-line option `--strict-root` can be used to make sure that all files are siblings of the `styleRoot` directory and will thus be processed by `clang-format`. Without this option, this wrapper will simply pass all encountered files to `clang-format`.
+
+By default `clang-format` will not process any file for which it doesn't encounter a `.clang-format` file in any of the file's parent directory. Notice that formatting would still be executed if a `.clang-format` file exists somewhere in the file's path, even if it is not the `styleFile` specified by this tool.
+
+The `--strict-root` option therefore ensures that all files will be processed with the style file configured by the call to `run-clang-format`.
+
+> **Remark:** The `--strict-root` option should only be used for file trees that do not use symlinks or other paths. Such paths may not be resolved correctly.
 
 # Use-cases
 

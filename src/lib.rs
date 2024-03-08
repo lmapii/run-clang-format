@@ -174,6 +174,13 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
             "{} No style file specified, assuming .clang-format exists in the project tree",
             step.next()
         );
+        if data.strict_root {
+            return Err(eyre::eyre!("Missing style root for strict root check")).suggestion(
+                "The strict root check is only available when specifying a 'styleRoot' directory. \
+                 Without it, the location of the .clang-format file is unknown and \
+                 the file paths cannot be checked.",
+            );
+        }
     }
 
     let candidates =
@@ -199,6 +206,11 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         filtered
     );
 
+    // log::info!(
+    //     "{}",
+    //     serde_json::to_string_pretty(&paths.clone().collect::<Vec<_>>()).unwrap()
+    // );
+
     let cmd = get_command(&data)?;
     let cmd_path = match cmd.get_path().canonicalize() {
         Ok(path) => path,
@@ -210,6 +222,48 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
         console::style(cmd.get_version().unwrap()).bold(),
         console::style(cmd_path.to_string_lossy()).bold(),
     );
+
+    let paths: Vec<_> = paths.collect();
+
+    // strict root directory check: all files must be siblings of the style root.
+    if data.strict_root {
+        // we're checking that --style-root is only allowed if a styleRoot
+        // has been specified (the check is not available if a .clang-format file is simply
+        // assumed to exist in the file tree).
+        let (_, style_root) = style_and_root
+            .as_ref()
+            .expect("--style-root parameter consistency check missing");
+
+        log::info!(
+            "{} Ensuring that all files are in the 'styleRoot' directory {}",
+            step.next(),
+            console::style(style_root.to_string_lossy()).bold(),
+        );
+
+        let outside_root: Vec<&path::PathBuf> = paths
+            .iter()
+            .filter(|p| !p.starts_with(style_root))
+            .collect();
+
+        if !outside_root.is_empty() {
+            let style_root = style_root.to_string_lossy();
+            log::error!(
+                "The following files are outside of the 'styleRoot' directory {}",
+                serde_json::to_string_pretty(&outside_root).unwrap()
+            );
+            return Err(eyre::eyre!(
+                "Found {} files outside the 'styleRoot' directory {}",
+                outside_root.len(),
+                style_root
+            ))
+            .suggestion(
+                "Please make sure that all files are in the 'styleRoot' directory. Notice that \
+                 the strict root check only works reliably for normal paths and may fail for, \
+                 e.g., symlinks."
+                    .to_string(),
+            );
+        }
+    }
 
     let strip_root = if let Some((_, style_root)) = &style_and_root {
         Some(path::PathBuf::from(style_root.as_path()))
@@ -247,7 +301,6 @@ pub fn run(data: cli::Data) -> eyre::Result<()> {
     if log_pretty() {
         pb.set_prefix("Running");
     }
-    let paths: Vec<_> = paths.collect();
 
     let result: eyre::Result<()> = match data.cmd {
         cli::Command::Format => paths.into_par_iter().try_for_each(|path| {

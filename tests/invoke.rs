@@ -249,3 +249,34 @@ fn invoke_quiet() {
         false,
     );
 }
+
+// cargo test --test invoke 'invoke_strict_root' -- --test-threads=1 --nocapture
+
+#[test]
+fn invoke_strict_root() {
+    // first ensure that --strict-root works as parameter
+    let json = crate_root_rel("test-files/json/test-ok-strict-root.json");
+    run_cmd_and_assert(
+        cmd_with_path().arg(json.as_os_str()).arg("--strict-root"),
+        true,
+    );
+
+    // with the parameter --strict-root, the following execution fails since the "module_d" is
+    // outside of the styleRoot directory and will therefore be ignored by clang-format. This
+    // is an optional parameter since OS paths may involve symlinks, etc.
+    let json = crate_root_rel("test-files/json/test-err-strict-root.json");
+    run_cmd_and_assert(
+        cmd_with_path().arg(json.as_os_str()).arg("--strict-root"),
+        false,
+    );
+}
+
+#[test]
+fn invoke_strict_root_err() {
+    // The --strict-root needs a styleRoot parameter, which is not given with the following file:
+    let json = crate_root_rel("test-files/json/test-ok-empty-paths.json");
+    run_cmd_and_assert(
+        cmd_with_path().arg(json.as_os_str()).arg("--strict-root"),
+        false,
+    );
+}

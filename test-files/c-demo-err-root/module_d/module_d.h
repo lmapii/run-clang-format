@@ -1,30 +1,24 @@
-/*
+/**
+ * \file module_d.h
+ *
+ * \brief dummy module
+ *
  * Copyright (c) 2024 Martin Lampacher. All rights reserved.
  */
 
-#include "module_a.h"
-#include <stdbool.h>
+#ifndef _MODULE_D_H_
+#define _MODULE_D_H_
 
 /***********************************************************************************************************************
- * Data
+ * Includes
  **********************************************************************************************************************/
 
-static volatile bool _changeme = false;
+#include <stdint.h>
 
 /***********************************************************************************************************************
  * Functions
  **********************************************************************************************************************/
 
-void module_a_init (void)
-{
-    uint32_t some_value = 1;
-    // nothing to see here
-    _changeme = !_changeme;
+void module_d_init (void);
 
-    CALC (_changeme, some_value);
-
-    if (some_value < MODULE_A_SMTH)
-    {
-        some_value++;
-    }
-}
+#endif /* _MODULE_D_H_ */

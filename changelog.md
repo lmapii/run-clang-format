@@ -1,3 +1,6 @@
+# 1.5.0
+
+- Added `--strict-root` option.
 
 # 1.4.0
 

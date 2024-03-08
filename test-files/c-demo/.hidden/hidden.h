@@ -3,7 +3,7 @@
  *
  * \brief dummy module
  *
- * Copyright (c) 2022 Martin Lampacher. All rights reserved.
+ * Copyright (c) 2024 Martin Lampacher. All rights reserved.
  */
 
 #ifndef _HIDDEN_H_
