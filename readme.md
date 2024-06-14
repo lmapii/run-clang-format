@@ -1,6 +1,6 @@
 # run-clang-format <!-- omit in toc -->
 
-[![Build status](https://github.com/lmapii/run-clang-format/workflows/ci/badge.svg)](https://github.com/lmapii/run-clang-format/actions)
+[![Build status](https://github.com/lmapii/run-clang-format/actions/workflows/ci.yml/badge.svg)](https://github.com/lmapii/run-clang-format/actions/workflows/ci.yml)
 
 CLI application for running [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) for an existing `.clang-format` file on a set of files, specified using globs in a `.json` configuration file.
 
