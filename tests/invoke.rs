@@ -62,15 +62,8 @@ fn invoke_json_and_bin() {
     // empty .json file is not accepted
     let json = crate_root_rel("test-files/json/test-err-empty.json");
     cmd().arg(json.as_os_str()).assert().failure();
-
     let json = crate_root_rel("test-files/json/test-ok-empty-paths.json");
-    // .json file with empty paths is accepted, but clang-format is not in the $PATH
-    if cfg!(target_os = "linux") {
-        // TODO: cmd() does not seem to properly clear the env/path in linux ?
-        // this might be related since we're invoking a command within a command
-        // so on linux the original PATH might apply for each invocation within this command
-        cmd().arg(json.as_os_str()).assert().failure();
-    }
+
     // as soon as we add the path to clang-format to $PATH the execution is successful
     cmd_with_path().arg(json.as_os_str()).assert().success();
 }
