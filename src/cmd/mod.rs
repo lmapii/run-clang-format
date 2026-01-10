@@ -41,10 +41,9 @@ impl Runner {
         match status.code() {
             Some(0) => (),
             Some(code) => {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("Process terminated with code {code}"),
-                ));
+                return Err(io::Error::other(format!(
+                    "Process terminated with code {code}"
+                )));
             }
             None => {
                 return Err(io::Error::new(
@@ -84,18 +83,14 @@ impl Runner {
         let stdout = String::from_utf8_lossy(&cmd.stdout);
 
         self.version = Some(stdout.parse::<Version>().map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                format!("Failed to parse --version output {stdout}: {err}"),
-            )
+            io::Error::other(format!("Failed to parse --version output {stdout}: {err}"))
         })?);
         Ok(())
     }
 
     pub fn supports_check_or_err(&self) -> Result<(), io::Error> {
         if self.version.is_none() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(io::Error::other(
                 "Unknown version, --dry-run requires \
                 clang-format version 10.0.1 or higher",
             ));
@@ -104,14 +99,11 @@ impl Runner {
         // https://github.com/llvm/llvm-project/commit/6a1f7d6c9ff8228328d0e65b8678a9c6dff49837
         let version = self.version.as_ref().unwrap();
         if version.major < 9u8 {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!(
-                    "Invalid version {}, --dry-run check requires \
+            return Err(io::Error::other(format!(
+                "Invalid version {}, --dry-run check requires \
                     clang-format version 10.0.1 or higher",
-                    self.get_version().unwrap()
-                ),
-            ));
+                self.get_version().unwrap()
+            )));
         }
 
         Ok(())
@@ -123,11 +115,8 @@ impl Runner {
         if let Err(err) = Runner::eval_status(output.status) {
             let stderr = String::from_utf8_lossy(&output.stderr);
 
-            if stderr.len() != 0 {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("{err}\n---\n{stderr}---"),
-                ));
+            if !stderr.is_empty() {
+                return Err(io::Error::other(format!("{err}\n---\n{stderr}---")));
             }
             return Err(err);
         }
