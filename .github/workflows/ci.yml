@@ -3,7 +3,7 @@
 # https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
 # https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
 
-# TODO: cargo-deny, cargo-audit, cargo-udeps, cargo-outdated
+# TODO: cargo-audit, cargo-udeps, cargo-outdated
 
 name: ci
 on:
@@ -23,8 +23,8 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@v1
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: rustfmt
@@ -33,7 +33,7 @@ jobs:
   typos:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: crate-ci/typos@master
       # with:
       #   files: ./file.txt
@@ -43,12 +43,18 @@ jobs:
     # operating system dependent configurations (except case sensitivity setting)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@v1
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: clippy
       - run: cargo clippy --all-targets --workspace -- -D warnings
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: EmbarkStudios/cargo-deny-action@v2
 
   compile:
     name: Compile ${{ matrix.tuple.build }}
@@ -72,12 +78,13 @@ jobs:
         # alternatively matrix could be shared and specified via .json
         # see https://github.community/t/how-to-share-matrix-between-jobs/128595/8
         # ---
-          - { build: 'linux-x86_64-pinned',   os: 'ubuntu-22.04',   target: 'x86_64-unknown-linux-gnu',      cross: false, rust: 1.82,   archive: true  }
-          - { build: 'windows-x86_64-pinned', os: 'windows-2019',   target: 'x86_64-pc-windows-msvc',        cross: false, rust: 1.82,   archive: true  }
-          - { build: 'macos-x86_64-pinned',   os: 'macos-latest',   target: 'x86_64-apple-darwin',           cross: false, rust: 1.82,   archive: true  }
+          - { build: 'linux-x86_64-pinned',   os: 'ubuntu-22.04',   target: 'x86_64-unknown-linux-gnu',      cross: false, rust: 1.92.0, archive: true  }
+          - { build: 'windows-x86_64-pinned', os: 'windows-2019',   target: 'x86_64-pc-windows-msvc',        cross: false, rust: 1.92.0, archive: true  }
+          - { build: 'macos-x86_64-pinned',   os: 'macos-latest',   target: 'x86_64-apple-darwin',           cross: false, rust: 1.92.0, archive: true  }
           - { build: 'linux-x86_64',          os: 'ubuntu-latest',  target: 'x86_64-unknown-linux-gnu',      cross: false, rust: stable, archive: false }
           - { build: 'linux-i686',            os: 'ubuntu-latest',  target: 'i686-unknown-linux-gnu',        cross: true,  rust: stable, archive: false }
-          - { build: 'linux-arm',             os: 'ubuntu-latest',  target: 'aarch64-unknown-linux-gnu',     cross: true,  rust: stable, archive: false } # aarch64
+          - { build: 'linux-arm-gnu',         os: 'ubuntu-latest',  target: 'aarch64-unknown-linux-gnu',     cross: true,  rust: stable, archive: false } # aarch64 (glibc)
+          - { build: 'linux-arm-musl',        os: 'ubuntu-latest',  target: 'aarch64-unknown-linux-musl',    cross: true,  rust: stable, archive: false } # aarch64
         # - { build: 'ubuntu-armv7',          os: 'ubuntu-latest',  target: 'armv7-unknown-linux-gnueabihf', cross: true,  rust: stable, archive: false } # armv7
         # - { build: 'ubuntu-armv6',          os: 'ubuntu-latest',  target: 'arm-unknown-linux-gnueabihf',   cross: true,  rust: stable, archive: false } # armv6
           - { build: 'macos-x86_64',          os: 'macos-latest',   target: 'x86_64-apple-darwin',           cross: false, rust: stable, archive: false }
@@ -89,7 +96,7 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       # Rustup update can fail on windows since it tries to replace its binary. This is not really
       # needed anyhow. https://github.com/rust-lang/rustup/issues/3029
 
@@ -98,8 +105,9 @@ jobs:
         run: rustup set auto-self-update disable
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
+          # https://github.com/dtolnay/rust-toolchain
           # this specifies the rustup toolchain
           toolchain: ${{ matrix.tuple.rust }}
           target: ${{ matrix.tuple.target }}
@@ -144,7 +152,7 @@ jobs:
           fi
 
       - name: Archive artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: matrix.tuple.archive != false && github.event_name == 'pull_request'
         with:
           name: dist-${{github.run_number}}-${{ matrix.tuple.target }}
@@ -167,7 +175,7 @@ jobs:
           - stable
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install packages (ubuntu)
         if: matrix.os == 'ubuntu-22.04'
@@ -192,10 +200,10 @@ jobs:
         run: rustup set auto-self-update disable
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
 
-      - name: Test
+      - name: Run tests
         # using only one test thread to avoid race conditions on temporary files
         run: cargo test --verbose --no-fail-fast -- --test-threads 1
